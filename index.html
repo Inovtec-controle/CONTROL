@@ -89,7 +89,6 @@
     const photoGallery = document.getElementById("photoGallery");
     let photoDataUrls = [];
 
-    // Gestion multi-ajout de photos
     photoInput.addEventListener("change", function() {
       Array.from(this.files).forEach(file => {
         const reader = new FileReader();
@@ -115,14 +114,14 @@
         };
         reader.readAsDataURL(file);
       });
-      this.value = ""; // permet de re-sélectionner des photos plus tard
+      this.value = "";
     });
 
     function ajouterLigneChecklist(nom = null) {
       const input = document.getElementById("newChecklistItem");
       if (!nom) nom = input.value.trim();
       if (!nom) return;
-      
+
       const radioName = "c_" + nom.replace(/\s+/g, "_");
       const container = document.getElementById("checklistContainer");
       const item = document.createElement("div");
@@ -211,45 +210,65 @@
         else if (result === "Passable") passableCount++;
         else if (result === "Mal fait") malCount++;
 
-        if (result === "Bon") doc.setTextColor(34,197,94);
-        else if (result === "Passable") doc.setTextColor(234,179,8);
-        else if (result === "Mal fait") doc.setTextColor(239,68,68);
-        else doc.setTextColor(0,0,0);
+        doc.setTextColor(result === "Bon" ? 34 : result === "Passable" ? 234 : result === "Mal fait" ? 239 : 0,
+                         result === "Bon" ? 197 : result === "Passable" ? 179 : result === "Mal fait" ? 68 : 0,
+                         result === "Bon" ? 94  : result === "Passable" ? 8   : result === "Mal fait" ? 68 : 0);
 
         doc.text(`- ${nom} : ${result}`, 10, y);
         y += 8;
         if (y > 270) { doc.addPage(); y = 15; }
       });
 
-      // Observations
       y += 5;
       doc.setTextColor(0,0,0);
       doc.text("Observations :", 10, y);
       y += 8;
       doc.text(doc.splitTextToSize(observations, 180), 10, y);
 
-      // Photos (2 par page)
-      for (let i = 0; i < photoDataUrls.length; i += 2) {
-        doc.addPage();
-        doc.setFontSize(14);
-        doc.text(`Photos ${i+1}${photoDataUrls[i+1] ? " & " + (i+2) : ""} :`, 10, 15);
+      for (let i = 0; i < photoDataUrls.length; i++) {
+        const imgData = photoDataUrls[i];
+        const img = new Image();
+        img.src = imgData;
 
-        doc.addImage(photoDataUrls[i], 'JPEG', 15, 25, 85, 65);
-        if (photoDataUrls[i+1]) doc.addImage(photoDataUrls[i+1], 'JPEG', 110, 25, 85, 65);
+        await new Promise(resolve => {
+          img.onload = () => {
+            const maxWidth = 85;
+            const maxHeight = 85;
+            const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
+            const w = img.width * ratio;
+            const h = img.height * ratio;
+
+            if (i % 2 === 0) {
+              doc.addPage();
+              doc.setFontSize(14);
+              doc.text(`Photos ${i + 1}${photoDataUrls[i + 1] ? " & " + (i + 2) : ""} :`, 10, 15);
+            }
+
+            const x = i % 2 === 0 ? 15 : 110;
+            const yImg = 25;
+            doc.addImage(imgData, 'JPEG', x, yImg, w, h);
+            resolve();
+          };
+        });
       }
 
-      // Score global + graphique
       const total = bonCount + passableCount + malCount;
-      const scoreGlobal = total === 0 ? 0 : Math.round(((bonCount*100 + passableCount*50) / (total*100)) * 100);
+      const scoreGlobal = total === 0 ? 0 : Math.round(((bonCount * 100 + passableCount * 50) / (total * 100)) * 100);
 
       const chartCanvas = document.getElementById("chartCanvas");
       const chart = new Chart(chartCanvas, {
         type: 'pie',
-        data: { labels: ['Bon', 'Passable', 'Mal fait'], datasets: [{ data: [bonCount, passableCount, malCount], backgroundColor: ['#22c55e', '#eab308', '#ef4444'] }] },
+        data: {
+          labels: ['Bon', 'Passable', 'Mal fait'],
+          datasets: [{
+            data: [bonCount, passableCount, malCount],
+            backgroundColor: ['#22c55e', '#eab308', '#ef4444']
+          }]
+        },
         options: { responsive: false }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 1000)); // délai iOS
+      await new Promise(resolve => setTimeout(resolve, 800));
       const chartDataUrl = chartCanvas.toDataURL('image/png');
 
       doc.addPage();
