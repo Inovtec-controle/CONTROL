@@ -3,50 +3,55 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Accueil - Application Qualité</title>
+  <title>Accueil - Application Nettoyage</title>
   <style>
     body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      background: linear-gradient(to bottom right, #10b981, #059669);
-      color: white;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      min-height: 100vh;
       align-items: center;
-      height: 100vh;
-      text-align: center;
-    }
-    .container {
-      max-width: 500px;
-      padding: 20px;
+      justify-content: center;
     }
     h1 {
-      font-size: 28px;
+      color: #10b981;
+      text-align: center;
       margin-bottom: 30px;
     }
-    a.button {
-      display: inline-block;
-      padding: 15px 30px;
-      font-size: 18px;
-      background: white;
-      color: #059669;
-      border-radius: 12px;
-      text-decoration: none;
-      font-weight: bold;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      transition: transform 0.2s ease, background 0.2s ease;
+    .menu {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 80%;
+      max-width: 400px;
     }
-    a.button:hover {
-      background: #f0f0f0;
-      transform: scale(1.03);
+    a {
+      display: block;
+      background: #10b981;
+      color: white;
+      text-decoration: none;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 18px;
+      text-align: center;
+      transition: background 0.3s ease;
+    }
+    a:hover {
+      background: #059669;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Bienvenue dans l'application<br>de Contrôle Qualité Nettoyage</h1>
-    <a href="controle.html" class="button">🚀 Accéder au Contrôle</a>
+
+  <h1>🧼 Application Nettoyage</h1>
+
+  <div class="menu">
+    <a href="controle.html">📋 Contrôle Qualité</a>
+    <a href="employes.html">👥 Liste des Employés</a>
   </div>
+
 </body>
 </html>
