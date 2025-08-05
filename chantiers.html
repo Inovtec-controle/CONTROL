@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chantiers</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9fafb;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    header {
+      background: #10b981;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 20px;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .list {
+      width: 35%;
+      background: #fff;
+      padding: 10px;
+      border-right: 1px solid #ccc;
+      overflow-y: auto;
+    }
+
+    .list h2 {
+      margin-top: 0;
+    }
+
+    .list ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .list li {
+      padding: 10px;
+      background: #f3f4f6;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .list li:hover {
+      background: #e5e7eb;
+    }
+
+    .details {
+      flex: 1;
+      padding: 20px;
+      background: #fff;
+      overflow-y: auto;
+    }
+
+    .details label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    .details input, .details textarea {
+      width: 100%;
+      padding: 8px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-top: 5px;
+    }
+
+    .actions {
+      margin-top: 20px;
+    }
+
+    button {
+      background: #10b981;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    button:hover {
+      background: #059669;
+    }
+
+    .back {
+      background: #3b82f6;
+      margin: 15px;
+    }
+
+    .back:hover {
+      background: #2563eb;
+    }
+  </style>
+</head>
+<body>
+
+  <header>🏢 Gestion des Chantiers</header>
+
+  <a href="index.html" class="back">⬅ Retour à l’accueil</a>
+
+  <main>
+    <div class="list">
+      <h2>📋 Liste des Chantiers</h2>
+      <input type="text" id="newNom" placeholder="Nom de la résidence..." />
+      <button onclick="ajouterChantier()">➕ Ajouter</button>
+      <ul id="chantierList"></ul>
+    </div>
+
+    <div class="details" id="chantierDetails" style="display: none;">
+      <h2>🔧 Détails du Chantier</h2>
+      <div id="formFields"></div>
+      <div class="actions">
+        <button onclick="sauvegarderChantier()">💾 Enregistrer</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let chantiers = JSON.parse(localStorage.getItem("chantiers") || "[]");
+    let selectedChantier = null;
+
+    const champs = [
+      "Nom de la résidence",
+      "N° De Clef",
+      "Adresse",
+      "Contact",
+      "Téléphone",
+      "Mails",
+      "Syndic",
+      "Intervention",
+      "Agents",
+      "Numéro Agents",
+      "Jour de passage",
+      "Tache",
+      "Code",
+      "clef",
+      "Sortie om",
+      "Sortie tr",
+      "Frange",
+      "type",
+      "ampoules néons",
+      "sac poubelle"
+    ];
+
+    function afficherListe() {
+      const ul = document.getElementById("chantierList");
+      ul.innerHTML = "";
+      chantiers.forEach((chantier, index) => {
+        const li = document.createElement("li");
+        li.textContent = chantier["Nom de la résidence"];
+        li.onclick = () => afficherDetails(index);
+        ul.appendChild(li);
+      });
+    }
+
+    function ajouterChantier() {
+      const nom = document.getElementById("newNom").value.trim();
+      if (!nom) return;
+      const nouveau = {};
+      champs.forEach(ch => nouveau[ch] = "");
+      nouveau["Nom de la résidence"] = nom;
+      chantiers.push(nouveau);
+      localStorage.setItem("chantiers", JSON.stringify(chantiers));
+      document.getElementById("newNom").value = "";
+      afficherListe();
+    }
+
+    function afficherDetails(index) {
+      selectedChantier = index;
+      const chantier = chantiers[index];
+      const formFields = document.getElementById("formFields");
+      formFields.innerHTML = "";
+      champs.forEach(ch => {
+        const label = document.createElement("label");
+        label.textContent = ch;
+        const input = document.createElement("input");
+        input.value = chantier[ch] || "";
+        input.id = "champ_" + ch.replace(/\s+/g, "_");
+        formFields.appendChild(label);
+        formFields.appendChild(input);
+      });
+      document.getElementById("chantierDetails").style.display = "block";
+    }
+
+    function sauvegarderChantier() {
+      if (selectedChantier === null) return;
+      champs.forEach(ch => {
+        const val = document.getElementById("champ_" + ch.replace(/\s+/g, "_")).value;
+        chantiers[selectedChantier][ch] = val;
+      });
+      localStorage.setItem("chantiers", JSON.stringify(chantiers));
+      afficherListe();
+      alert("✅ Chantier mis à jour !");
+    }
+
+    window.addEventListener("DOMContentLoaded", afficherListe);
+  </script>
+
+</body>
+</html>
