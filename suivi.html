@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suivi de Qualité</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #f0f2f5;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      color: #10b981;
+      font-size: 24px;
+    }
+    canvas {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 10px;
+      margin-top: 20px;
+    }
+    .btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background: #059669;
+    }
+  </style>
+</head>
+<body>
+  <h1>Suivi de la Qualité</h1>
+  <canvas id="graphiqueQualite" width="800" height="400"></canvas>
+
+  <div style="text-align:center;">
+    <button class="btn" onclick="window.location.href='controle.html'">⬅ Retour au contrôle</button>
+  </div>
+
+  <script>
+    const ctx = document.getElementById('graphiqueQualite').getContext('2d');
+    const donnees = JSON.parse(localStorage.getItem("resultatsQualite") || "[]");
+
+    // Grouper les scores par chantier
+    const groupes = {};
+    donnees.forEach(entry => {
+      if (!groupes[entry.chantier]) groupes[entry.chantier] = [];
+      groupes[entry.chantier].push({
+        x: new Date(entry.date),
+        y: entry.score
+      });
+    });
+
+    const couleurs = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#6366f1', '#14b8a6'];
+    const datasets = Object.entries(groupes).map(([chantier, valeurs], i) => ({
+      label: chantier,
+      data: valeurs,
+      borderColor: couleurs[i % couleurs.length],
+      backgroundColor: couleurs[i % couleurs.length],
+      tension: 0.2
+    }));
+
+    new Chart(ctx, {
+      type: 'line',
+      data: { datasets },
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            type: 'time',
+            time: {
+              tooltipFormat: 'DD/MM/YYYY HH:mm',
+              unit: 'day',
+              displayFormats: { day: 'DD/MM' }
+            },
+            title: { display: true, text: 'Date' }
+          },
+          y: {
+            beginAtZero: true,
+            max: 100,
+            title: { display: true, text: 'Score sur 100' }
+          }
+        },
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: { mode: 'nearest', intersect: false }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
