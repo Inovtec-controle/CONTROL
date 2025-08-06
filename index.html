@@ -28,7 +28,7 @@
       width: 80%;
       max-width: 400px;
     }
-    a {
+    a, button {
       display: block;
       background: #10b981;
       color: white;
@@ -38,9 +38,14 @@
       font-size: 18px;
       text-align: center;
       transition: background 0.3s ease;
+      border: none;
+      cursor: pointer;
     }
-    a:hover {
+    a:hover, button:hover {
       background: #059669;
+    }
+    #importFile {
+      display: none;
     }
   </style>
 </head>
@@ -50,11 +55,53 @@
 
   <div class="menu">
     <a href="controle.html">Contrôle Qualité</a>
-    <a href="employes.html"> Liste des Employés</a>
-    <a href="chantiers.html"> Liste des Chantiers</a>
-    <a href="suivis-variable.html"> Variables</a>
+    <a href="employes.html">Liste des Employés</a>
+    <a href="chantiers.html">Liste des Chantiers</a>
+    <a href="suivis-variable.html">Variables</a>
 
+    <!-- Export/Import Buttons -->
+    <button onclick="exporterDonnees()">📤 Exporter les données</button>
+    <button onclick="document.getElementById('importFile').click()">📥 Importer les données</button>
+    <input type="file" id="importFile" accept=".json" onchange="importerDonnees(event)">
   </div>
+
+  <script>
+    function exporterDonnees() {
+      const data = {
+        chantiers: localStorage.getItem("chantiers"),
+        chantiersListe: localStorage.getItem("chantiersListe"),
+        resultatsQualite: localStorage.getItem("resultatsQualite"),
+        employes: localStorage.getItem("employes"),
+        autresVariables: localStorage.getItem("autresVariables")
+      };
+      const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "inovtec-donnees.json";
+      a.click();
+    }
+
+    function importerDonnees(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.chantiers) localStorage.setItem("chantiers", data.chantiers);
+          if (data.chantiersListe) localStorage.setItem("chantiersListe", data.chantiersListe);
+          if (data.resultatsQualite) localStorage.setItem("resultatsQualite", data.resultatsQualite);
+          if (data.employes) localStorage.setItem("employes", data.employes);
+          if (data.autresVariables) localStorage.setItem("autresVariables", data.autresVariables);
+          alert("✅ Données importées avec succès !");
+        } catch (err) {
+          alert("❌ Fichier invalide !");
+        }
+      };
+      reader.readAsText(file);
+    }
+  </script>
 
 </body>
 </html>
