@@ -100,6 +100,7 @@
 
     function afficherChantiers() {
       chantierSelect.innerHTML = "";
+      chantiers.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
       chantiers.forEach(nom => {
         const option = document.createElement("option");
         option.value = nom;
