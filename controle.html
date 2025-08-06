@@ -46,6 +46,7 @@
     .photo-preview { max-width: 100%; border-radius: 12px; display: block; }
     .photo-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
     .btn-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; }
+    #pieChartCanvas { display: none; }
   </style>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -90,11 +91,9 @@
     </form>
   </div>
 
-  <!-- Canvas caché pour graphique camembert -->
-  <canvas id="pieChartCanvas" width="300" height="300" style="display:none;"></canvas>
+  <canvas id="pieChartCanvas" width="300" height="300"></canvas>
 
   <script>
-    // GESTION CHANTIERS
     let chantiers = JSON.parse(localStorage.getItem("chantiersListe") || "[]");
     const chantierSelect = document.getElementById("chantierSelect");
 
@@ -107,18 +106,16 @@
         option.textContent = nom;
         chantierSelect.appendChild(option);
       });
-
       const chantierSauvegarde = localStorage.getItem("chantierSelectionne");
       if (chantierSauvegarde) chantierSelect.value = chantierSauvegarde;
     }
 
     function ajouterChantier() {
-      const input = document.getElementById("nouveauChantier");
-      const nom = input.value.trim();
+      const nom = document.getElementById("nouveauChantier").value.trim();
       if (!nom || chantiers.includes(nom)) return;
       chantiers.push(nom);
       localStorage.setItem("chantiersListe", JSON.stringify(chantiers));
-      input.value = "";
+      document.getElementById("nouveauChantier").value = "";
       afficherChantiers();
     }
 
@@ -216,7 +213,7 @@
       const observations = document.getElementById("observations").value;
       const items = document.querySelectorAll(".checklist-item");
       const date = new Date().toLocaleString('fr-FR');
-      let bonCount = 0, passableCount = 0, malCount = 0;
+      let bon = 0, passable = 0, mal = 0;
       let y = 15;
 
       doc.setFontSize(16);
@@ -230,19 +227,19 @@
       doc.text(`Date : ${date}`, 10, y);
       y += 12;
 
-      items.forEach((item) => {
+      items.forEach(item => {
         const nom = item.querySelector("span").textContent;
         const radios = item.querySelectorAll("input[type='radio']");
         let result = "non évalué";
         radios.forEach(r => { if (r.checked) result = r.value; });
 
-        if (result === "Bon") bonCount++;
-        else if (result === "Passable") passableCount++;
-        else if (result === "Mal fait") malCount++;
+        if (result === "Bon") bon++;
+        else if (result === "Passable") passable++;
+        else if (result === "Mal fait") mal++;
 
-        doc.setTextColor(result === "Bon" ? 34 : result === "Passable" ? 234 : result === "Mal fait" ? 239 : 0,
-                         result === "Bon" ? 197 : result === "Passable" ? 179 : result === "Mal fait" ? 68 : 0,
-                         result === "Bon" ? 94  : result === "Passable" ? 8   : result === "Mal fait" ? 68 : 0);
+        doc.setTextColor(result === "Bon" ? 34 : result === "Passable" ? 234 : 239,
+                         result === "Bon" ? 197 : result === "Passable" ? 179 : 68,
+                         result === "Bon" ? 94  : result === "Passable" ? 8 : 68);
 
         doc.text(`- ${nom} : ${result}`, 10, y);
         y += 8;
@@ -255,31 +252,22 @@
       y += 8;
       doc.text(doc.splitTextToSize(observations, 180), 10, y);
 
-      const total = bonCount + passableCount + malCount;
-      const scoreGlobal = total === 0 ? 0 : Math.round(((bonCount * 100 + passableCount * 50) / (total * 100)) * 100);
+      const total = bon + passable + mal;
+      const score = total === 0 ? 0 : Math.round(((bon * 100 + passable * 50) / (total * 100)) * 100);
 
       const resultats = JSON.parse(localStorage.getItem("resultatsQualite") || "[]");
-      resultats.push({ chantier, date, score: scoreGlobal });
+      resultats.push({ chantier, date, score });
       localStorage.setItem("resultatsQualite", JSON.stringify(resultats));
 
-      // Générer graphique camembert dans canvas caché
+      // Générer graphique camembert
       const pieCanvas = document.getElementById("pieChartCanvas");
       new Chart(pieCanvas, {
         type: 'pie',
         data: {
           labels: ["Bon", "Passable", "Mal fait"],
-          datasets: [{
-            data: [bonCount, passableCount, malCount],
-            backgroundColor: ["#10b981", "#f59e0b", "#ef4444"]
-          }]
+          datasets: [{ data: [bon, passable, mal], backgroundColor: ["#10b981", "#f59e0b", "#ef4444"] }]
         },
-        options: {
-          responsive: false,
-          plugins: {
-            legend: { position: "bottom" },
-            title: { display: true, text: "Résultats du contrôle" }
-          }
-        }
+        options: { responsive: false }
       });
 
       setTimeout(() => {
@@ -287,12 +275,10 @@
           const imgData = canvas.toDataURL("image/png");
 
           doc.addPage();
-          doc.setFontSize(16);
-          doc.setTextColor(0, 0, 0);
-          doc.text("Score global : " + scoreGlobal + "/100", 10, 20);
-          doc.addImage(imgData, "PNG", 50, 30, 100, 100);
+          doc.text("Score global : " + score + "/100", 10, 20);
+          doc.addImage(imgData, "PNG", 40, 30, 130, 130);
 
-          // Stockage PDF encodé (optionnel)
+          // Enregistrer PDF encodé dans localStorage
           const pdfBase64 = doc.output("datauristring");
           const pdfs = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
           pdfs.push({ chantier, date, nom: `rapport-${chantier}-${date}.pdf`, base64: pdfBase64 });
