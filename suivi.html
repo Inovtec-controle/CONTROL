@@ -56,11 +56,26 @@
       padding: 0;
     }
     .pdf-list li {
-      margin: 5px 0;
+      margin: 8px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .pdf-list a {
       text-decoration: none;
       color: #2563eb;
+    }
+    .pdf-list button {
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .pdf-list button:hover {
+      background: #dc2626;
     }
   </style>
 </head>
@@ -68,7 +83,7 @@
   <h1>Suivi de la Qualité</h1>
   <canvas id="graphiqueQualite" width="800" height="400"></canvas>
 
-  <div class="pdf-list" id="pdfListContainer">
+  <div class="pdf-list">
     <h2>PDF générés pour ce chantier :</h2>
     <ul id="pdfList"></ul>
   </div>
@@ -79,18 +94,16 @@
 
   <script>
     const chantierSelectionne = localStorage.getItem("chantierSelectionne");
-    const donnees = JSON.parse(localStorage.getItem("resultatsQualite") || "[]");
+    const resultats = JSON.parse(localStorage.getItem("resultatsQualite") || "[]");
+    const pdfs = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
+    const pdfList = document.getElementById("pdfList");
 
-    // Filtrer les données pour le chantier sélectionné
-    const donneesFiltrees = donnees.filter(d => d.chantier === chantierSelectionne);
-
-    // Construire les points pour le graphique
-    const points = donneesFiltrees.map(entry => ({
-      x: new Date(entry.date),
-      y: entry.score
+    // 🎯 Afficher le graphique
+    const donneesFiltrees = resultats.filter(d => d.chantier === chantierSelectionne);
+    const points = donneesFiltrees.map(d => ({
+      x: new Date(d.date),
+      y: d.score
     }));
-
-    // Dessiner le graphique
     const ctx = document.getElementById('graphiqueQualite').getContext('2d');
     new Chart(ctx, {
       type: 'line',
@@ -128,46 +141,43 @@
       }
     });
 
-    // Lister les PDF générés pour ce chantier
-    async function listerPDF() {
-      const liste = document.getElementById("pdfList");
+    // 📁 Affichage des PDF stockés pour le chantier
+    function afficherPDFs() {
+      pdfList.innerHTML = "";
+      const filtres = pdfs.filter(p => p.chantier === chantierSelectionne);
 
-      // Remplacer ceci par l'URL de ton dossier contenant les PDF, si hébergé
-      const dossier = ".";
-
-      // Lecture des fichiers (nécessite un backend ou GitHub Pages avec liste activée)
-      try {
-        const res = await fetch(dossier);
-        const html = await res.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
-        const liens = Array.from(doc.querySelectorAll("a"));
-
-        const fichiersPDF = liens
-          .map(a => a.getAttribute("href"))
-          .filter(href => href.endsWith(".pdf") && href.includes(chantierSelectionne));
-
-        if (fichiersPDF.length === 0) {
-          liste.innerHTML = "<li>Aucun PDF trouvé pour ce chantier.</li>";
-        } else {
-          fichiersPDF.forEach(fichier => {
-            const nomFichier = fichier.split('/').pop();
-            const lien = document.createElement("a");
-            lien.href = fichier;
-            lien.textContent = nomFichier;
-            lien.target = "_blank";
-            const li = document.createElement("li");
-            li.appendChild(lien);
-            liste.appendChild(li);
-          });
-        }
-      } catch (err) {
-        console.error("Erreur lors du listing des PDF :", err);
-        liste.innerHTML = "<li>Impossible de charger les fichiers PDF (accès refusé ?).</li>";
+      if (filtres.length === 0) {
+        pdfList.innerHTML = "<li>Aucun PDF trouvé pour ce chantier.</li>";
+        return;
       }
+
+      filtres.forEach((pdf, index) => {
+        const li = document.createElement("li");
+        const lien = document.createElement("a");
+        lien.href = pdf.base64;
+        lien.textContent = pdf.nom;
+        lien.target = "_blank";
+
+        const boutonSupprimer = document.createElement("button");
+        boutonSupprimer.textContent = "🗑 Supprimer";
+        boutonSupprimer.onclick = () => {
+          if (confirm(`Supprimer le fichier "${pdf.nom}" ?`)) {
+            const indexDansStockage = pdfs.findIndex(p => p.nom === pdf.nom);
+            if (indexDansStockage !== -1) {
+              pdfs.splice(indexDansStockage, 1);
+              localStorage.setItem("pdfsStockes", JSON.stringify(pdfs));
+              afficherPDFs();
+            }
+          }
+        };
+
+        li.appendChild(lien);
+        li.appendChild(boutonSupprimer);
+        pdfList.appendChild(li);
+      });
     }
 
-    listerPDF();
+    afficherPDFs();
   </script>
 </body>
 </html>
