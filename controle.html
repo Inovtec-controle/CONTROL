@@ -92,7 +92,7 @@
   <canvas id="pieChartCanvas" width="300" height="300" style="display:none;"></canvas>
 
   <script>
-    // Gestion chantiers
+    // Gestion des chantiers
     const chantierSelect = document.getElementById("chantierSelect");
     let chantiers = JSON.parse(localStorage.getItem("chantiersListe") || "[]");
 
@@ -105,7 +105,6 @@
         option.textContent = nom;
         chantierSelect.appendChild(option);
       });
-
       const chantierSauvegarde = localStorage.getItem("chantierSelectionne");
       if (chantierSauvegarde) chantierSelect.value = chantierSauvegarde;
     }
@@ -140,7 +139,6 @@
       const input = document.getElementById("newChecklistItem");
       if (!nom) nom = input.value.trim();
       if (!nom) return;
-
       const radioName = "c_" + nom.replace(/\s+/g, "_");
       const div = document.createElement("div");
       div.className = "checklist-item";
@@ -272,7 +270,13 @@
           pdfs.push({ chantier, date, nom: `rapport-${chantier}-${date}.pdf`, base64: pdfBase64 });
           localStorage.setItem("pdfsStockes", JSON.stringify(pdfs));
 
-          window.open(pdfBase64, "_blank");
+          // ✅ Téléchargement automatique (compatible mobile)
+          const link = document.createElement("a");
+          link.href = pdfBase64;
+          link.download = `rapport-${chantier}-${date}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
         });
       }, 500);
     }
