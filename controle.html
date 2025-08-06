@@ -26,12 +26,11 @@
       margin-bottom: 20px;
     }
     label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
-    input[type="text"], textarea, input[type="file"] {
+    select, input[type="text"], textarea, input[type="file"] {
       width: 100%; padding: 10px; margin-bottom: 12px;
       border: 1px solid #ccc; border-radius: 8px;
       font-size: 14px; box-sizing: border-box;
     }
-    textarea { resize: none; }
     .checklist-item { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-bottom: 8px; padding: 6px; border-radius: 8px; }
     .checklist-item span { flex: 1 1 100%; font-size: 14px; }
     .checklist-options label { font-weight: normal; font-size: 12px; margin-right: 5px; }
@@ -52,11 +51,21 @@
 </head>
 <body>
   <h1>Contrôle Qualité - Nettoyage</h1>
+
+  <div class="card">
+    <label for="chantierSelect">Chantier :</label>
+    <select id="chantierSelect"></select>
+
+    <input type="text" id="nouveauChantier" placeholder="Nouveau chantier..." />
+    <div class="btn-row">
+      <button type="button" onclick="ajouterChantier()">➕ Ajouter</button>
+      <button type="button" class="btn-danger" onclick="supprimerChantier()">🗑 Supprimer</button>
+      <button onclick="location.href='suivi.html'">📈 Suivi de qualité</button>
+    </div>
+  </div>
+
   <div class="card">
     <form id="controleForm">
-      <label for="zone">Chantier :</label>
-      <input type="text" id="zone" placeholder="Ex: Bureau 204" required />
-
       <div class="add-checklist-container">
         <input type="text" id="newChecklistItem" placeholder="Nouvelle ligne de contrôle..." />
         <button type="button" onclick="ajouterLigneChecklist()">Ajouter</button>
@@ -85,43 +94,49 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
-    const photoInput = document.getElementById("photos");
-    const photoGallery = document.getElementById("photoGallery");
-    let photoDataUrls = [];
+    // GESTION CHANTIERS
+    let chantiers = JSON.parse(localStorage.getItem("chantiersListe") || "[]");
+    const chantierSelect = document.getElementById("chantierSelect");
 
-    photoInput.addEventListener("change", function() {
-      Array.from(this.files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = e => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
-            const maxWidth = 1000;
-            const scale = Math.min(maxWidth / img.width, 1);
-            canvas.width = img.width * scale;
-            canvas.height = img.height * scale;
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
-            photoDataUrls.push(dataUrl);
-
-            const thumb = document.createElement("img");
-            thumb.src = dataUrl;
-            thumb.className = "photo-preview";
-            photoGallery.appendChild(thumb);
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
+    function afficherChantiers() {
+      chantierSelect.innerHTML = "";
+      chantiers.forEach(nom => {
+        const option = document.createElement("option");
+        option.value = nom;
+        option.textContent = nom;
+        chantierSelect.appendChild(option);
       });
-      this.value = "";
+    }
+
+    function ajouterChantier() {
+      const input = document.getElementById("nouveauChantier");
+      const nom = input.value.trim();
+      if (!nom || chantiers.includes(nom)) return;
+      chantiers.push(nom);
+      localStorage.setItem("chantiersListe", JSON.stringify(chantiers));
+      input.value = "";
+      afficherChantiers();
+    }
+
+    function supprimerChantier() {
+      const selected = chantierSelect.value;
+      if (!selected) return;
+      if (!confirm(`Supprimer le chantier "${selected}" ?`)) return;
+      chantiers = chantiers.filter(n => n !== selected);
+      localStorage.setItem("chantiersListe", JSON.stringify(chantiers));
+      afficherChantiers();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      afficherChantiers();
+      ajouterLigneChecklistInitiales();
     });
 
+    // CHECKLIST
     function ajouterLigneChecklist(nom = null) {
       const input = document.getElementById("newChecklistItem");
       if (!nom) nom = input.value.trim();
       if (!nom) return;
-
       const radioName = "c_" + nom.replace(/\s+/g, "_");
       const container = document.getElementById("checklistContainer");
       const item = document.createElement("div");
@@ -147,45 +162,55 @@
 
     function ajouterLigneChecklistInitiales() {
       [
-        "Nettoyage des digicodes et interphone",
-        "Vitrerie miroiterie / mouilleur raclette",
-        "Vitrerie miroiterie / enlèvement des trace de doigt",
-        "Nettoyage des encadrements des vitres et portes d'entrée",
-        "Enroulement de tapis",
-        "Aspirations des sols",
-        "Lavages des sols",
-        "Aspirations des escaliers de services",
-        "Lavage des escaliers de service",
-        "Enlèvements de toiles d'araignées",
-        "Nettoyage des rampes et des gardes corps",
-        "Nettoyage porte de service",
-        "Nettoyage des gaines techniques",
-        "Dépoussiérage des plinthes",
-        "Nettoyage bloc boites aux lettres",
-        "Vidage poubelle",
-        "Mise en poche poubelle",
-        "Nettoyage façades ascenseurs extérieures",
-        "Nettoyage façades ascenseurs intérieures",
-        "Nettoyages des tranches latérales",
-        "Nettoyage des rails de l'ascenseur",
-        "Nettoyage des plaques de commandes ascenseurs",
-        "Rentré conteneurs",
-        "Sortie conteneurs",
-        "Nettoyage et désinfection des conteneurs",
-        "Lavage du local conteneur"
+        "Nettoyage digicodes/interphone", "Vitrerie miroiterie", "Encadrements vitres/portes",
+        "Tapis", "Aspirateur sols", "Lavage sols", "Escaliers services",
+        "Toiles d'araignées", "Rampes/gardes corps", "Porte de service",
+        "Gaines techniques", "Plinthes", "Boîtes aux lettres",
+        "Vidage poubelle", "Poche poubelle", "Ascenseurs (int/ext)",
+        "Rails ascenseur", "Commandes ascenseur", "Conteneurs", "Local conteneurs"
       ].forEach(nom => ajouterLigneChecklist(nom));
     }
 
-    document.addEventListener("DOMContentLoaded", ajouterLigneChecklistInitiales);
+    // PHOTOS
+    const photoInput = document.getElementById("photos");
+    const photoGallery = document.getElementById("photoGallery");
+    let photoDataUrls = [];
 
+    photoInput.addEventListener("change", function() {
+      Array.from(this.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const maxWidth = 1000;
+            const scale = Math.min(maxWidth / img.width, 1);
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+            photoDataUrls.push(dataUrl);
+            const thumb = document.createElement("img");
+            thumb.src = dataUrl;
+            thumb.className = "photo-preview";
+            photoGallery.appendChild(thumb);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+      this.value = "";
+    });
+
+    // PDF + SCORE
     async function genererPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
-      const chantier = document.getElementById("zone").value;
+      const chantier = chantierSelect.value || "Sans nom";
       const observations = document.getElementById("observations").value;
       const items = document.querySelectorAll(".checklist-item");
       const date = new Date().toLocaleString('fr-FR');
-
       let bonCount = 0, passableCount = 0, malCount = 0;
       let y = 15;
 
@@ -220,65 +245,23 @@
       });
 
       y += 5;
-      doc.setTextColor(0,0,0);
+      doc.setTextColor(0, 0, 0);
       doc.text("Observations :", 10, y);
       y += 8;
       doc.text(doc.splitTextToSize(observations, 180), 10, y);
 
-      for (let i = 0; i < photoDataUrls.length; i++) {
-        const imgData = photoDataUrls[i];
-        const img = new Image();
-        img.src = imgData;
-
-        await new Promise(resolve => {
-          img.onload = () => {
-            const maxWidth = 85;
-            const maxHeight = 85;
-            const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
-            const w = img.width * ratio;
-            const h = img.height * ratio;
-
-            if (i % 2 === 0) {
-              doc.addPage();
-              doc.setFontSize(14);
-              doc.text(`Photos ${i + 1}${photoDataUrls[i + 1] ? " & " + (i + 2) : ""} :`, 10, 15);
-            }
-
-            const x = i % 2 === 0 ? 15 : 110;
-            const yImg = 25;
-            doc.addImage(imgData, 'JPEG', x, yImg, w, h);
-            resolve();
-          };
-        });
-      }
-
       const total = bonCount + passableCount + malCount;
       const scoreGlobal = total === 0 ? 0 : Math.round(((bonCount * 100 + passableCount * 50) / (total * 100)) * 100);
 
-      const chartCanvas = document.getElementById("chartCanvas");
-      const chart = new Chart(chartCanvas, {
-        type: 'pie',
-        data: {
-          labels: ['Bon', 'Passable', 'Mal fait'],
-          datasets: [{
-            data: [bonCount, passableCount, malCount],
-            backgroundColor: ['#22c55e', '#eab308', '#ef4444']
-          }]
-        },
-        options: { responsive: false }
-      });
-
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const chartDataUrl = chartCanvas.toDataURL('image/png');
+      const resultats = JSON.parse(localStorage.getItem("resultatsQualite") || "[]");
+      resultats.push({ chantier, date, score: scoreGlobal });
+      localStorage.setItem("resultatsQualite", JSON.stringify(resultats));
 
       doc.addPage();
       doc.setFontSize(16);
-      doc.text("Qualité Globale du Chantier", 10, 15);
-      doc.setFontSize(14);
-      doc.text(`Score global : ${scoreGlobal}/100`, 10, 25);
-      doc.addImage(chartDataUrl, 'PNG', 30, 40, 150, 150);
+      doc.text("Score global : " + scoreGlobal + "/100", 10, 20);
 
-      doc.save("rapport-controle-nettoyage.pdf");
+      doc.save(`rapport-${chantier}-${date}.pdf`);
     }
   </script>
 </body>
