@@ -47,9 +47,18 @@
     .entry {
       padding: 10px;
       border-bottom: 1px solid #ddd;
+      position: relative;
     }
-    .entry:last-child {
-      border-bottom: none;
+    .delete-btn {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
     }
     .back-link {
       display: block;
@@ -105,6 +114,7 @@
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const entry = {
+        id: Date.now(), // Identifiant unique
         date: document.getElementById('date').value,
         agent: document.getElementById('agent').value,
         description: document.getElementById('description').value,
@@ -117,6 +127,14 @@
       updateList();
     });
 
+    // Supprimer une entrée
+    function deleteEntry(id) {
+      let entries = getEntries();
+      entries = entries.filter(e => e.id !== id);
+      saveEntries(entries);
+      updateList();
+    }
+
     // Affichage filtré
     function updateList() {
       const selectedMonth = monthSelect.value;
@@ -125,16 +143,19 @@
         ? entries.filter(e => e.date.startsWith(selectedMonth))
         : entries;
 
-      entriesList.innerHTML = filtered.length
-        ? filtered.map(e => `
-            <div class="entry">
-              <strong>Date :</strong> ${e.date}<br>
-              <strong>Agent :</strong> ${e.agent}<br>
-              <strong>Description :</strong> ${e.description}<br>
-              <strong>Temps :</strong> ${e.temps}h
-            </div>
-          `).join('')
-        : "<p>Aucune entrée pour ce mois.</p>";
+      if (filtered.length) {
+        entriesList.innerHTML = filtered.map(e => `
+          <div class="entry">
+            <strong>Date :</strong> ${e.date}<br>
+            <strong>Agent :</strong> ${e.agent}<br>
+            <strong>Description :</strong> ${e.description}<br>
+            <strong>Temps :</strong> ${e.temps}h
+            <button class="delete-btn" onclick="deleteEntry(${e.id})">Supprimer</button>
+          </div>
+        `).join('');
+      } else {
+        entriesList.innerHTML = "<p>Aucune entrée pour ce mois.</p>";
+      }
     }
 
     // Mettre à jour lors du changement de mois
@@ -142,7 +163,6 @@
 
     // Affichage initial
     window.addEventListener('load', () => {
-      // Remplir par défaut le mois en cours
       const today = new Date().toISOString().slice(0, 7);
       monthSelect.value = today;
       updateList();
