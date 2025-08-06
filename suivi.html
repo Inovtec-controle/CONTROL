@@ -3,133 +3,130 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Suivi de Qualité</title>
+  <title>Suivi de Qualité - Nettoyage</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, sans-serif;
-      background: #f9fafb;
+      background: #f3f4f6;
+      padding: 20px;
       max-width: 750px;
       margin: auto;
-      padding: 20px;
     }
     h1 {
-      color: #10b981;
       text-align: center;
+      color: #10b981;
+      font-size: 22px;
       margin-bottom: 20px;
     }
-    .pdf-card {
-      background: #fff;
-      padding: 15px;
+    .rapport-card {
+      background: white;
       border-radius: 12px;
+      padding: 15px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       margin-bottom: 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
     }
-    .pdf-info {
-      flex: 1;
-      margin-right: 10px;
-    }
-    .pdf-info strong {
-      display: block;
+    .rapport-header {
+      font-weight: bold;
       font-size: 16px;
+      margin-bottom: 8px;
       color: #111827;
     }
-    .pdf-info span {
-      font-size: 14px;
+    .rapport-date {
       color: #6b7280;
+      font-size: 14px;
+      margin-bottom: 12px;
     }
     .btn-row {
       display: flex;
-      gap: 8px;
+      gap: 10px;
+      justify-content: flex-start;
     }
     button {
       padding: 8px 12px;
+      font-size: 14px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 14px;
+    }
+    .btn-consulter {
+      background: #3b82f6;
       color: white;
     }
-    .btn-open { background-color: #10b981; }
-    .btn-open:hover { background-color: #059669; }
-    .btn-delete { background-color: #ef4444; }
-    .btn-delete:hover { background-color: #dc2626; }
-    .back-button {
-      display: block;
-      text-align: center;
-      margin-top: 20px;
-      text-decoration: none;
+    .btn-consulter:hover {
+      background: #2563eb;
+    }
+    .btn-supprimer {
+      background: #ef4444;
+      color: white;
+    }
+    .btn-supprimer:hover {
+      background: #dc2626;
+    }
+    .btn-retour {
+      margin-bottom: 20px;
       background: #10b981;
       color: white;
-      padding: 10px;
-      border-radius: 8px;
+    }
+    .btn-retour:hover {
+      background: #059669;
+    }
+    #listeRapportsVide {
+      text-align: center;
+      color: #6b7280;
+      margin-top: 40px;
+      font-style: italic;
     }
   </style>
 </head>
 <body>
-  <h1>Suivi de Qualité</h1>
-
-  <div id="pdfList"></div>
-
-  <a href="controle.html" class="back-button">⬅ Retour au contrôle qualité</a>
+  <h1>Suivi de Qualité - Nettoyage</h1>
+  <button class="btn-retour" onclick="location.href='controle.html'">⬅ Retour au contrôle</button>
+  <div id="listeRapports"></div>
+  <div id="listeRapportsVide" style="display:none;">Aucun rapport pour ce chantier.</div>
 
   <script>
-    const chantier = localStorage.getItem("chantierSelectionne");
-    const pdfList = document.getElementById("pdfList");
-    const allPDFs = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
-    const filteredPDFs = allPDFs.filter(p => p.chantier === chantier);
+    const chantier = localStorage.getItem("chantierSelectionne") || "Inconnu";
+    const listeDiv = document.getElementById("listeRapports");
+    const listeVide = document.getElementById("listeRapportsVide");
+    let rapports = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
 
-    function afficherPDFs() {
-      pdfList.innerHTML = "";
-      if (filteredPDFs.length === 0) {
-        pdfList.innerHTML = `<p style="text-align:center; color:gray;">Aucun PDF trouvé pour le chantier : <strong>${chantier}</strong></p>`;
-        return;
-      }
+    const rapportsFiltrés = rapports
+      .filter(r => r.chantier === chantier)
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-      filteredPDFs.forEach((pdf, index) => {
-        const card = document.createElement("div");
-        card.className = "pdf-card";
-
-        const info = document.createElement("div");
-        info.className = "pdf-info";
-        info.innerHTML = `<strong>${pdf.nom}</strong><span>${pdf.date}</span>`;
-
-        const buttons = document.createElement("div");
-        buttons.className = "btn-row";
-
-        const btnOpen = document.createElement("button");
-        btnOpen.className = "btn-open";
-        btnOpen.textContent = "📂 Ouvrir";
-        btnOpen.onclick = () => {
-          const newTab = window.open();
-          newTab.document.write(`<iframe width='100%' height='100%' src='${pdf.base64}'></iframe>`);
-        };
-
-        const btnDelete = document.createElement("button");
-        btnDelete.className = "btn-delete";
-        btnDelete.textContent = "🗑 Supprimer";
-        btnDelete.onclick = () => {
-          if (confirm("Supprimer ce PDF ?")) {
-            const all = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
-            all.splice(index, 1);
-            localStorage.setItem("pdfsStockes", JSON.stringify(all));
-            location.reload();
-          }
-        };
-
-        buttons.appendChild(btnOpen);
-        buttons.appendChild(btnDelete);
-
-        card.appendChild(info);
-        card.appendChild(buttons);
-        pdfList.appendChild(card);
+    if (rapportsFiltrés.length === 0) {
+      listeVide.style.display = "block";
+    } else {
+      rapportsFiltrés.forEach((rapport, index) => {
+        const div = document.createElement("div");
+        div.className = "rapport-card";
+        div.innerHTML = `
+          <div class="rapport-header">${rapport.nom}</div>
+          <div class="rapport-date">🗓 ${rapport.date}</div>
+          <div class="btn-row">
+            <button class="btn-consulter" onclick="ouvrirPDF('${rapport.nom}')">📄 Consulter</button>
+            <button class="btn-supprimer" onclick="supprimerPDF('${rapport.nom}')">🗑 Supprimer</button>
+          </div>
+        `;
+        listeDiv.appendChild(div);
       });
     }
 
-    afficherPDFs();
+    function ouvrirPDF(nom) {
+      const rapport = rapports.find(r => r.nom === nom);
+      if (rapport && rapport.blobUrl) {
+        window.open(rapport.blobUrl, "_blank");
+      } else {
+        alert("PDF introuvable.");
+      }
+    }
+
+    function supprimerPDF(nom) {
+      if (!confirm(`Supprimer le rapport "${nom}" ?`)) return;
+      rapports = rapports.filter(r => r.nom !== nom);
+      localStorage.setItem("pdfsStockes", JSON.stringify(rapports));
+      location.reload();
+    }
   </script>
 </body>
 </html>
