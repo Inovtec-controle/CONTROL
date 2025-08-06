@@ -1,183 +1,111 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Suivi de Qualité</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, sans-serif;
-      background: #f0f2f5;
-      padding: 20px;
-      max-width: 800px;
+      background-color: #f9fafb;
+      padding: 10px;
+      max-width: 750px;
       margin: auto;
     }
     h1 {
       text-align: center;
       color: #10b981;
-      font-size: 24px;
+      font-size: 22px;
+      margin-bottom: 20px;
     }
-    canvas {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      padding: 10px;
+    .card {
+      background-color: white;
+      border-radius: 16px;
+      padding: 15px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      margin-bottom: 15px;
+    }
+    .pdf-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .pdf-name {
+      font-size: 14px;
+      flex: 1;
+    }
+    .pdf-actions button {
+      background-color: #10b981;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      padding: 5px 10px;
+      font-size: 12px;
+      margin-left: 6px;
+      cursor: pointer;
+    }
+    .pdf-actions button:hover {
+      background-color: #059669;
+    }
+    .btn-danger {
+      background-color: #ef4444;
+    }
+    .btn-danger:hover {
+      background-color: #dc2626;
+    }
+    .no-result {
+      text-align: center;
+      color: #777;
+      font-size: 14px;
       margin-top: 20px;
     }
-    .btn {
-      display: inline-block;
-      margin-top: 20px;
-      padding: 10px 20px;
+    .btn-back {
+      display: block;
+      margin: 20px auto 0;
+      text-align: center;
       background: #10b981;
       color: white;
       border: none;
       border-radius: 8px;
-      font-size: 16px;
+      padding: 10px 15px;
+      font-size: 14px;
       cursor: pointer;
     }
-    .btn:hover {
-      background: #059669;
-    }
-    .pdf-list {
-      margin-top: 30px;
-      background: white;
-      padding: 15px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-    .pdf-list h2 {
-      font-size: 18px;
-      margin-bottom: 10px;
-      color: #374151;
-    }
-    .pdf-list ul {
-      list-style: none;
-      padding: 0;
-    }
-    .pdf-list li {
-      margin: 8px 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .pdf-list a {
-      text-decoration: none;
-      color: #2563eb;
-    }
-    .pdf-list button {
-      background: #ef4444;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 5px 10px;
-      cursor: pointer;
-      font-size: 12px;
-    }
-    .pdf-list button:hover {
-      background: #dc2626;
+    .btn-back:hover {
+      background-color: #059669;
     }
   </style>
 </head>
 <body>
-  <h1>Suivi de la Qualité</h1>
-  <canvas id="graphiqueQualite" width="800" height="400"></canvas>
+  <h1>📈 Suivi de Qualité</h1>
 
-  <div class="pdf-list">
-    <h2>PDF générés pour ce chantier :</h2>
-    <ul id="pdfList"></ul>
-  </div>
+  <div id="pdfList" class="card"></div>
 
-  <div style="text-align:center;">
-    <button class="btn" onclick="window.location.href='controle.html'">⬅ Retour au contrôle</button>
-  </div>
+  <button class="btn-back" onclick="location.href='controle.html'">⬅ Retour au contrôle</button>
 
   <script>
-    const chantierSelectionne = localStorage.getItem("chantierSelectionne");
-    const resultats = JSON.parse(localStorage.getItem("resultatsQualite") || "[]");
-    const pdfs = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
-    const pdfList = document.getElementById("pdfList");
+    function chargerPDFs() {
+      const pdfContainer = document.getElementById("pdfList");
+      const chantier = localStorage.getItem("chantierSelectionne") || "";
+      const tousLesPDFs = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
 
-    // 🎯 Afficher le graphique
-    const donneesFiltrees = resultats.filter(d => d.chantier === chantierSelectionne);
-    const points = donneesFiltrees.map(d => ({
-      x: new Date(d.date),
-      y: d.score
-    }));
-    const ctx = document.getElementById('graphiqueQualite').getContext('2d');
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        datasets: [{
-          label: chantierSelectionne || "Chantier",
-          data: points,
-          borderColor: '#10b981',
-          backgroundColor: '#10b981',
-          tension: 0.2
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          x: {
-            type: 'time',
-            time: {
-              tooltipFormat: 'DD/MM/YYYY HH:mm',
-              unit: 'day',
-              displayFormats: { day: 'DD/MM' }
-            },
-            title: { display: true, text: 'Date' }
-          },
-          y: {
-            beginAtZero: true,
-            max: 100,
-            title: { display: true, text: 'Score sur 100' }
-          }
-        },
-        plugins: {
-          legend: { position: 'bottom' },
-          tooltip: { mode: 'nearest', intersect: false }
-        }
-      }
-    });
+      const pdfsChantier = tousLesPDFs.filter(p => p.chantier === chantier);
 
-    // 📁 Affichage des PDF stockés pour le chantier
-    function afficherPDFs() {
-      pdfList.innerHTML = "";
-      const filtres = pdfs.filter(p => p.chantier === chantierSelectionne);
-
-      if (filtres.length === 0) {
-        pdfList.innerHTML = "<li>Aucun PDF trouvé pour ce chantier.</li>";
+      if (pdfsChantier.length === 0) {
+        pdfContainer.innerHTML = `<p class="no-result">Aucun rapport trouvé pour le chantier : <strong>${chantier || "Non défini"}</strong></p>`;
         return;
       }
 
-      filtres.forEach((pdf, index) => {
-        const li = document.createElement("li");
-        const lien = document.createElement("a");
-        lien.href = pdf.base64;
-        lien.textContent = pdf.nom;
-        lien.target = "_blank";
+      pdfContainer.innerHTML = "";
+      pdfsChantier.forEach((pdf, index) => {
+        const div = document.createElement("div");
+        div.className = "pdf-item";
 
-        const boutonSupprimer = document.createElement("button");
-        boutonSupprimer.textContent = "🗑 Supprimer";
-        boutonSupprimer.onclick = () => {
-          if (confirm(`Supprimer le fichier "${pdf.nom}" ?`)) {
-            const indexDansStockage = pdfs.findIndex(p => p.nom === pdf.nom);
-            if (indexDansStockage !== -1) {
-              pdfs.splice(indexDansStockage, 1);
-              localStorage.setItem("pdfsStockes", JSON.stringify(pdfs));
-              afficherPDFs();
-            }
-          }
-        };
+        const nomAffiche = pdf.nom.length > 50 ? pdf.nom.slice(0, 47) + "..." : pdf.nom;
 
-        li.appendChild(lien);
-        li.appendChild(boutonSupprimer);
-        pdfList.appendChild(li);
-      });
-    }
-
-    afficherPDFs();
-  </script>
-</body>
-</html>
+        div.innerHTML = `
+          <span class="pdf-name">${nomAffiche}</span>
+          <div class="pdf-actions">
+            <button onclick="ouvr
