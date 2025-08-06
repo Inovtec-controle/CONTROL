@@ -283,7 +283,15 @@
       const date = new Date().toLocaleString('fr-FR');
       let bonCount = 0, passableCount = 0, malCount = 0;
       let y = 15;
-
+      const pdfBase64 = doc.output("datauristring");
+      const pdfs = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
+      pdfs.push({
+  chantier,
+  date,
+  nom: `rapport-${chantier}-${date}.pdf`,
+  base64: pdfBase64
+});
+localStorage.setItem("pdfsStockes", JSON.stringify(pdfs));
       doc.setFontSize(16);
       doc.setTextColor(16, 185, 129);
       doc.text("Rapport de Contrôle Qualité - Nettoyage", 10, y);
@@ -336,3 +344,4 @@
   </script>
 </body>
 </html>
+
