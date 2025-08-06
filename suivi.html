@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Suivi de Qualité - Nettoyage</title>
+  <title>Suivi de qualité</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, sans-serif;
-      background: #f3f4f6;
-      padding: 20px;
+      background: #f0f2f5;
+      padding: 10px;
       max-width: 750px;
       margin: auto;
     }
@@ -16,117 +16,138 @@
       text-align: center;
       color: #10b981;
       font-size: 22px;
-      margin-bottom: 20px;
+      margin: 10px 0;
     }
-    .rapport-card {
+    .pdf-list {
       background: white;
-      border-radius: 12px;
+      border-radius: 16px;
       padding: 15px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin-bottom: 15px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
-    .rapport-header {
-      font-weight: bold;
-      font-size: 16px;
-      margin-bottom: 8px;
-      color: #111827;
-    }
-    .rapport-date {
-      color: #6b7280;
-      font-size: 14px;
-      margin-bottom: 12px;
-    }
-    .btn-row {
+    .pdf-item {
       display: flex;
-      gap: 10px;
-      justify-content: flex-start;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
+      border-bottom: 1px solid #e5e7eb;
     }
-    button {
-      padding: 8px 12px;
-      font-size: 14px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
+    .pdf-name {
+      font-size: 15px;
+      color: #111827;
+      word-wrap: break-word;
     }
-    .btn-consulter {
-      background: #3b82f6;
-      color: white;
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
     }
-    .btn-consulter:hover {
-      background: #2563eb;
-    }
-    .btn-supprimer {
-      background: #ef4444;
-      color: white;
-    }
-    .btn-supprimer:hover {
-      background: #dc2626;
-    }
-    .btn-retour {
-      margin-bottom: 20px;
+    .btn {
+      flex: 1;
+      text-align: center;
       background: #10b981;
       color: white;
+      border: none;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
     }
-    .btn-retour:hover {
+    .btn:hover {
       background: #059669;
     }
-    #listeRapportsVide {
+    .btn-danger {
+      background: #ef4444;
+    }
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+    .no-data {
       text-align: center;
       color: #6b7280;
-      margin-top: 40px;
+      margin-top: 20px;
       font-style: italic;
+    }
+    .btn-retour {
+      display: block;
+      text-align: center;
+      margin: 20px auto 10px;
+      text-decoration: none;
+      background: #10b981;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      max-width: 200px;
     }
   </style>
 </head>
 <body>
-  <h1>Suivi de Qualité - Nettoyage</h1>
-  <button class="btn-retour" onclick="location.href='controle.html'">⬅ Retour au contrôle</button>
-  <div id="listeRapports"></div>
-  <div id="listeRapportsVide" style="display:none;">Aucun rapport pour ce chantier.</div>
+  <h1>Suivi de qualité</h1>
+  <div class="pdf-list" id="pdfList"></div>
+  <a href="controle.html" class="btn-retour">← Retour</a>
 
   <script>
-    const chantier = localStorage.getItem("chantierSelectionne") || "Inconnu";
-    const listeDiv = document.getElementById("listeRapports");
-    const listeVide = document.getElementById("listeRapportsVide");
-    let rapports = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
+    const pdfListDiv = document.getElementById("pdfList");
+    const chantierActuel = localStorage.getItem("chantierSelectionne");
+    const pdfs = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
 
-    const rapportsFiltrés = rapports
-      .filter(r => r.chantier === chantier)
-      .sort((a, b) => new Date(b.date) - new Date(a.date));
+    function afficherPDFs() {
+      pdfListDiv.innerHTML = "";
 
-    if (rapportsFiltrés.length === 0) {
-      listeVide.style.display = "block";
-    } else {
-      rapportsFiltrés.forEach((rapport, index) => {
-        const div = document.createElement("div");
-        div.className = "rapport-card";
-        div.innerHTML = `
-          <div class="rapport-header">${rapport.nom}</div>
-          <div class="rapport-date">🗓 ${rapport.date}</div>
-          <div class="btn-row">
-            <button class="btn-consulter" onclick="ouvrirPDF('${rapport.nom}')">📄 Consulter</button>
-            <button class="btn-supprimer" onclick="supprimerPDF('${rapport.nom}')">🗑 Supprimer</button>
-          </div>
-        `;
-        listeDiv.appendChild(div);
+      const pdfsChantier = pdfs
+        .filter(p => p.chantier === chantierActuel)
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      if (pdfsChantier.length === 0) {
+        pdfListDiv.innerHTML = `<p class="no-data">Aucun rapport pour le chantier sélectionné.</p>`;
+        return;
+      }
+
+      pdfsChantier.forEach((pdf, index) => {
+        const item = document.createElement("div");
+        item.className = "pdf-item";
+
+        const title = document.createElement("div");
+        title.className = "pdf-name";
+        title.textContent = pdf.nom;
+
+        const btnGroup = document.createElement("div");
+        btnGroup.className = "btn-group";
+
+        const viewBtn = document.createElement("a");
+        viewBtn.href = pdf.base64;
+        viewBtn.target = "_blank";
+        viewBtn.className = "btn";
+        viewBtn.textContent = "Ouvrir";
+
+        const downloadBtn = document.createElement("a");
+        downloadBtn.href = pdf.base64;
+        downloadBtn.download = pdf.nom;
+        downloadBtn.className = "btn";
+        downloadBtn.textContent = "Télécharger";
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "btn btn-danger";
+        deleteBtn.textContent = "Supprimer";
+        deleteBtn.onclick = () => {
+          if (confirm("Supprimer ce rapport PDF ?")) {
+            const nouvelleListe = pdfs.filter((p, i) => !(p.chantier === pdf.chantier && p.date === pdf.date && i === index));
+            localStorage.setItem("pdfsStockes", JSON.stringify(nouvelleListe));
+            afficherPDFs();
+          }
+        };
+
+        btnGroup.appendChild(viewBtn);
+        btnGroup.appendChild(downloadBtn);
+        btnGroup.appendChild(deleteBtn);
+        item.appendChild(title);
+        item.appendChild(btnGroup);
+        pdfListDiv.appendChild(item);
       });
     }
 
-    function ouvrirPDF(nom) {
-      const rapport = rapports.find(r => r.nom === nom);
-      if (rapport && rapport.blobUrl) {
-        window.open(rapport.blobUrl, "_blank");
-      } else {
-        alert("PDF introuvable.");
-      }
-    }
-
-    function supprimerPDF(nom) {
-      if (!confirm(`Supprimer le rapport "${nom}" ?`)) return;
-      rapports = rapports.filter(r => r.nom !== nom);
-      localStorage.setItem("pdfsStockes", JSON.stringify(rapports));
-      location.reload();
-    }
+    document.addEventListener("DOMContentLoaded", afficherPDFs);
   </script>
 </body>
 </html>
