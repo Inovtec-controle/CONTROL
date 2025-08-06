@@ -63,7 +63,7 @@
       padding: 20px;
       background: #fff;
       overflow-y: auto;
-      max-height: calc(100vh - 250px); /* Ajusté pour permettre le scroll */
+      max-height: calc(100vh - 250px);
     }
 
     .details label {
@@ -73,7 +73,8 @@
     }
 
     .details input,
-    .details textarea {
+    .details textarea,
+    select {
       width: 100%;
       padding: 8px;
       font-size: 14px;
@@ -100,13 +101,16 @@
       background: #059669;
     }
 
-    .back {
-      background: #3b82f6;
-      margin: 15px;
+    .btn-danger {
+      background: #ef4444;
     }
 
-    .back:hover {
-      background: #2563eb;
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .select-section {
+      margin-top: 10px;
     }
 
     @media (min-width: 768px) {
@@ -133,8 +137,18 @@
   <main>
     <div class="list">
       <h2>📋 Liste des Chantiers</h2>
+
+      <div class="select-section">
+        <label for="chantierSelect">Menu déroulant :</label>
+        <select id="chantierSelect" onchange="afficherDetailsDepuisSelect()">
+          <option value="">-- Sélectionner un chantier --</option>
+        </select>
+      </div>
+
       <input type="text" id="newNom" placeholder="Nom de la résidence..." />
       <button onclick="ajouterChantier()">➕ Ajouter</button>
+      <button class="btn-danger" onclick="supprimerChantier()">🗑 Supprimer</button>
+
       <ul id="chantierList"></ul>
     </div>
 
@@ -176,21 +190,34 @@
 
     function afficherListe() {
       const ul = document.getElementById("chantierList");
+      const select = document.getElementById("chantierSelect");
       ul.innerHTML = "";
+      select.innerHTML = `<option value="">-- Sélectionner un chantier --</option>`;
+
+      // Tri alphabétique
+      chantiers.sort((a, b) => (a["Nom de la résidence"] || "").localeCompare(b["Nom de la résidence"] || "", 'fr', { sensitivity: 'base' }));
+
       chantiers.forEach((chantier, index) => {
         const li = document.createElement("li");
         li.textContent = chantier["Nom de la résidence"];
         li.onclick = () => afficherDetails(index);
         ul.appendChild(li);
+
+        const option = document.createElement("option");
+        option.value = index;
+        option.textContent = chantier["Nom de la résidence"];
+        select.appendChild(option);
       });
     }
 
     function ajouterChantier() {
       const nom = document.getElementById("newNom").value.trim();
       if (!nom) return;
+
       const nouveau = {};
       champs.forEach(ch => nouveau[ch] = "");
       nouveau["Nom de la résidence"] = nom;
+
       chantiers.push(nouveau);
       localStorage.setItem("chantiers", JSON.stringify(chantiers));
       document.getElementById("newNom").value = "";
@@ -202,6 +229,7 @@
       const chantier = chantiers[index];
       const formFields = document.getElementById("formFields");
       formFields.innerHTML = "";
+
       champs.forEach(ch => {
         const label = document.createElement("label");
         label.textContent = ch;
@@ -211,17 +239,46 @@
         formFields.appendChild(label);
         formFields.appendChild(input);
       });
+
       document.getElementById("chantierDetails").style.display = "block";
+    }
+
+    function afficherDetailsDepuisSelect() {
+      const index = document.getElementById("chantierSelect").value;
+      if (index !== "") {
+        afficherDetails(Number(index));
+      }
     }
 
     function sauvegarderChantier() {
       if (selectedChantier === null) return;
+
       champs.forEach(ch => {
         const val = document.getElementById("champ_" + ch.replace(/\s+/g, "_")).value;
         chantiers[selectedChantier][ch] = val;
       });
+
       localStorage.setItem("chantiers", JSON.stringify(chantiers));
       alert("✅ Chantier mis à jour !");
+      afficherListe();
+    }
+
+    function supprimerChantier() {
+      const select = document.getElementById("chantierSelect");
+      const index = select.value;
+      if (index === "") {
+        alert("Veuillez sélectionner un chantier à supprimer.");
+        return;
+      }
+
+      const nom = chantiers[index]["Nom de la résidence"];
+      if (!confirm(`Supprimer le chantier "${nom}" ?`)) return;
+
+      chantiers.splice(index, 1);
+      localStorage.setItem("chantiers", JSON.stringify(chantiers));
+      selectedChantier = null;
+      document.getElementById("chantierDetails").style.display = "none";
+      afficherListe();
     }
 
     window.addEventListener("DOMContentLoaded", afficherListe);
