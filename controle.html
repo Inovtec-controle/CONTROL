@@ -25,27 +25,61 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       margin-bottom: 20px;
     }
-    label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
+    label, .checklist-item span {
+      display: block;
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
     select, input[type="text"], textarea, input[type="file"] {
-      width: 100%; padding: 10px; margin-bottom: 12px;
-      border: 1px solid #ccc; border-radius: 8px;
-      font-size: 14px; box-sizing: border-box;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
     }
-    .checklist-item { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-bottom: 8px; padding: 6px; border-radius: 8px; }
-    .checklist-item span { flex: 1 1 100%; font-size: 14px; }
-    .checklist-options label { font-weight: normal; font-size: 12px; margin-right: 5px; }
+    .checklist-item {
+      margin-bottom: 10px;
+      border-bottom: 1px dashed #ccc;
+      padding-bottom: 5px;
+    }
+    .checklist-options label {
+      margin-right: 10px;
+      font-weight: normal;
+      font-size: 12px;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 15px;
+    }
     button {
-      background: #10b981; color: white; padding: 10px;
-      border: none; border-radius: 8px; font-size: 14px; cursor: pointer;
+      background: #10b981;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
     }
-    button:hover { background: #059669; }
-    .btn-danger { background: #ef4444; }
-    .btn-danger:hover { background: #dc2626; }
-    .add-checklist-container { display: flex; gap: 5px; margin-bottom: 10px; }
-    .add-checklist-container input[type="text"] { flex: 1; }
-    .photo-preview { max-width: 100%; border-radius: 12px; display: block; }
-    .photo-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-    .btn-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; }
+    button:hover {
+      background: #059669;
+    }
+    .btn-danger {
+      background: #ef4444;
+    }
+    .photo-gallery {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .photo-preview {
+      width: 100%;
+      border-radius: 8px;
+    }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -59,28 +93,27 @@
     <select id="chantierSelect"></select>
     <input type="text" id="nouveauChantier" placeholder="Nouveau chantier..." />
     <div class="btn-row">
-      <button type="button" onclick="ajouterChantier()">➕ Ajouter</button>
-      <button type="button" class="btn-danger" onclick="supprimerChantier()">🗑 Supprimer</button>
+      <button onclick="ajouterChantier()">➕ Ajouter</button>
+      <button class="btn-danger" onclick="supprimerChantier()">🗑 Supprimer</button>
       <button onclick="location.href='suivi.html'">📈 Suivi de qualité</button>
     </div>
   </div>
 
   <div class="card">
     <form id="controleForm">
-      <div class="add-checklist-container">
-        <input type="text" id="newChecklistItem" placeholder="Nouvelle ligne de contrôle..." />
+      <label>Checklist :</label>
+      <div id="checklistContainer"></div>
+      <input type="text" id="newChecklistItem" placeholder="Nouvelle ligne..." />
+      <div class="btn-row">
         <button type="button" onclick="ajouterLigneChecklist()">Ajouter</button>
-        <button type="button" class="btn-danger" onclick="supprimerLignesSelectionnees()">Suppr.</button>
       </div>
 
-      <div class="checklist" id="checklistContainer"></div>
-
       <label for="observations">Observations :</label>
-      <textarea id="observations" rows="4" placeholder="Observations supplémentaires..."></textarea>
+      <textarea id="observations" rows="4"></textarea>
 
       <label for="photos">Ajouter des photos :</label>
-      <input type="file" id="photos" accept="image/*" capture="environment" multiple />
-      <div id="photoGallery" class="photo-gallery"></div>
+      <input type="file" id="photos" accept="image/*" multiple capture="environment" />
+      <div class="photo-gallery" id="photoGallery"></div>
 
       <div class="btn-row">
         <button type="button" onclick="genererPDF()">📄 Générer le PDF</button>
@@ -92,7 +125,6 @@
   <canvas id="pieChartCanvas" width="300" height="300" style="display:none;"></canvas>
 
   <script>
-    // Gestion des chantiers
     const chantierSelect = document.getElementById("chantierSelect");
     let chantiers = JSON.parse(localStorage.getItem("chantiersListe") || "[]");
 
@@ -105,8 +137,8 @@
         option.textContent = nom;
         chantierSelect.appendChild(option);
       });
-      const chantierSauvegarde = localStorage.getItem("chantierSelectionne");
-      if (chantierSauvegarde) chantierSelect.value = chantierSauvegarde;
+      const selection = localStorage.getItem("chantierSelectionne");
+      if (selection) chantierSelect.value = selection;
     }
 
     function ajouterChantier() {
@@ -130,47 +162,31 @@
       localStorage.setItem("chantierSelectionne", chantierSelect.value);
     });
 
-    document.addEventListener("DOMContentLoaded", () => {
-      afficherChantiers();
-      checklistInitiales();
-    });
-
     function ajouterLigneChecklist(nom = null) {
       const input = document.getElementById("newChecklistItem");
       if (!nom) nom = input.value.trim();
       if (!nom) return;
-      const radioName = "c_" + nom.replace(/\s+/g, "_");
+      const id = `item_${Date.now()}`;
       const div = document.createElement("div");
       div.className = "checklist-item";
       div.innerHTML = `
-        <input type="checkbox" class="delete-checkbox" />
         <span>${nom}</span>
         <div class="checklist-options">
-          <label><input type="radio" name="${radioName}" value="Bon" /> ✅ Bon</label>
-          <label><input type="radio" name="${radioName}" value="Passable" /> ⚠ Passable</label>
-          <label><input type="radio" name="${radioName}" value="Mal fait" /> ❌ Mal fait</label>
+          <label><input type="radio" name="${id}" value="Bon"> ✅ Bon</label>
+          <label><input type="radio" name="${id}" value="Passable"> ⚠ Passable</label>
+          <label><input type="radio" name="${id}" value="Mal fait"> ❌ Mal fait</label>
         </div>
       `;
       document.getElementById("checklistContainer").appendChild(div);
       input.value = "";
     }
 
-    function checklistInitiales() {
+    document.addEventListener("DOMContentLoaded", () => {
+      afficherChantiers();
       [
-        "Nettoyage digicodes/interphone", "Vitrerie miroiterie", "Encadrements vitres/portes",
-        "Tapis", "Aspirateur sols", "Lavage sols", "Escaliers services",
-        "Toiles d'araignées", "Rampes/gardes corps", "Porte de service",
-        "Gaines techniques", "Plinthes", "Boîtes aux lettres",
-        "Vidage poubelle", "Poche poubelle", "Ascenseurs (int/ext)",
-        "Rails ascenseur", "Commandes ascenseur", "Conteneurs", "Local conteneurs"
-      ].forEach(n => ajouterLigneChecklist(n));
-    }
-
-    function supprimerLignesSelectionnees() {
-      document.querySelectorAll(".checklist-item").forEach(item => {
-        if (item.querySelector(".delete-checkbox").checked) item.remove();
-      });
-    }
+        "Sol propre", "Poubelles vidées", "Vitres propres", "Interphone nettoyé"
+      ].forEach(ajouterLigneChecklist);
+    });
 
     const photoInput = document.getElementById("photos");
     const photoGallery = document.getElementById("photoGallery");
@@ -199,81 +215,76 @@
         };
         reader.readAsDataURL(file);
       });
-      this.value = "";
     });
 
     async function genererPDF() {
       const { jsPDF } = window.jspdf;
-      const chantier = chantierSelect.value;
-      const observations = document.getElementById("observations").value;
-      const items = document.querySelectorAll(".checklist-item");
-      const date = new Date().toLocaleString("fr-FR");
-      let bon = 0, passable = 0, mal = 0;
-
       const doc = new jsPDF();
+      const chantier = chantierSelect.value;
+      const date = new Date().toLocaleString("fr-FR");
+      const observations = document.getElementById("observations").value;
+
+      let bon = 0, passable = 0, mal = 0;
       let y = 10;
 
-      doc.setFontSize(16);
-      doc.setTextColor(16, 185, 129);
-      doc.text("Rapport de Contrôle Qualité - Nettoyage", 10, y);
-      y += 10;
+      doc.setFontSize(14);
+      doc.text(`Rapport Contrôle Qualité`, 10, y); y += 8;
       doc.setFontSize(12);
-      doc.setTextColor(0, 0, 0);
-      doc.text(`Chantier : ${chantier}`, 10, y);
-      y += 8;
-      doc.text(`Date : ${date}`, 10, y);
-      y += 10;
+      doc.text(`Chantier : ${chantier}`, 10, y); y += 6;
+      doc.text(`Date : ${date}`, 10, y); y += 8;
 
-      items.forEach(item => {
+      document.querySelectorAll(".checklist-item").forEach(item => {
         const nom = item.querySelector("span").textContent;
-        const radios = item.querySelectorAll("input[type='radio']");
-        let result = "non évalué";
-        radios.forEach(r => { if (r.checked) result = r.value; });
-
-        if (result === "Bon") bon++;
-        else if (result === "Passable") passable++;
-        else if (result === "Mal fait") mal++;
-
-        doc.text(`- ${nom} : ${result}`, 10, y);
+        const value = item.querySelector("input[type='radio']:checked")?.value || "non évalué";
+        if (value === "Bon") bon++;
+        else if (value === "Passable") passable++;
+        else if (value === "Mal fait") mal++;
+        doc.text(`- ${nom} : ${value}`, 10, y);
         y += 6;
         if (y > 270) { doc.addPage(); y = 10; }
       });
 
-      doc.text("Observations :", 10, y); y += 8;
-      doc.text(doc.splitTextToSize(observations, 180), 10, y);
+      doc.text("Observations :", 10, y); y += 6;
+      doc.text(doc.splitTextToSize(observations, 180), 10, y); y += 20;
 
       const total = bon + passable + mal;
       const score = total === 0 ? 0 : Math.round(((bon * 100 + passable * 50) / (total * 100)) * 100);
 
-      const resultats = JSON.parse(localStorage.getItem("resultatsQualite") || "[]");
-      resultats.push({ chantier, date, score });
-      localStorage.setItem("resultatsQualite", JSON.stringify(resultats));
-
-      const pieCanvas = document.getElementById("pieChartCanvas");
-      new Chart(pieCanvas, {
+      // Générer graphique
+      const chartCanvas = document.getElementById("pieChartCanvas");
+      new Chart(chartCanvas, {
         type: "pie",
         data: {
           labels: ["Bon", "Passable", "Mal fait"],
-          datasets: [{ data: [bon, passable, mal], backgroundColor: ["#10b981", "#f59e0b", "#ef4444"] }]
+          datasets: [{
+            data: [bon, passable, mal],
+            backgroundColor: ["#10b981", "#f59e0b", "#ef4444"]
+          }]
         },
         options: { responsive: false }
       });
 
       setTimeout(() => {
-        html2canvas(pieCanvas).then(canvas => {
+        html2canvas(chartCanvas).then(canvas => {
           doc.addPage();
-          doc.text(`Score global : ${score}/100`, 10, 20);
+          doc.text(`Score : ${score}/100`, 10, 20);
           doc.addImage(canvas.toDataURL("image/png"), "PNG", 40, 30, 120, 120);
 
+          // Ajouter les photos
+          photoDataUrls.forEach((url, index) => {
+            if (index % 2 === 0) doc.addPage();
+            doc.addImage(url, "JPEG", 15, 40, 180, 120);
+          });
+
           const pdfBase64 = doc.output("datauristring");
+          const nomPDF = `rapport-${chantier}-${date}.pdf`;
           const pdfs = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
-          pdfs.push({ chantier, date, nom: `rapport-${chantier}-${date}.pdf`, base64: pdfBase64 });
+          pdfs.push({ chantier, date, nom: nomPDF, base64: pdfBase64 });
           localStorage.setItem("pdfsStockes", JSON.stringify(pdfs));
 
-          // ✅ Téléchargement automatique (compatible mobile)
           const link = document.createElement("a");
           link.href = pdfBase64;
-          link.download = `rapport-${chantier}-${date}.pdf`;
+          link.download = nomPDF;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
