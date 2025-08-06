@@ -25,85 +25,28 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       margin-bottom: 20px;
     }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 600;
-      font-size: 14px;
-    }
+    label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
     select, input[type="text"], textarea, input[type="file"] {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 12px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 14px;
-      box-sizing: border-box;
+      width: 100%; padding: 10px; margin-bottom: 12px;
+      border: 1px solid #ccc; border-radius: 8px;
+      font-size: 14px; box-sizing: border-box;
     }
-    .checklist-item {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 5px;
-      margin-bottom: 8px;
-      padding: 6px;
-      border-radius: 8px;
-    }
-    .checklist-item span {
-      flex: 1 1 100%;
-      font-size: 14px;
-    }
-    .checklist-options label {
-      font-weight: normal;
-      font-size: 12px;
-      margin-right: 5px;
-    }
+    .checklist-item { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-bottom: 8px; padding: 6px; border-radius: 8px; }
+    .checklist-item span { flex: 1 1 100%; font-size: 14px; }
+    .checklist-options label { font-weight: normal; font-size: 12px; margin-right: 5px; }
     button {
-      background: #10b981;
-      color: white;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      cursor: pointer;
+      background: #10b981; color: white; padding: 10px;
+      border: none; border-radius: 8px; font-size: 14px; cursor: pointer;
     }
-    button:hover {
-      background: #059669;
-    }
-    .btn-danger {
-      background: #ef4444;
-    }
-    .btn-danger:hover {
-      background: #dc2626;
-    }
-    .add-checklist-container {
-      display: flex;
-      gap: 5px;
-      margin-bottom: 10px;
-    }
-    .add-checklist-container input[type="text"] {
-      flex: 1;
-    }
-    .photo-preview {
-      max-width: 100%;
-      border-radius: 12px;
-      display: block;
-    }
-    .photo-gallery {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-    .btn-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-      margin-top: 15px;
-    }
+    button:hover { background: #059669; }
+    .btn-danger { background: #ef4444; }
+    .btn-danger:hover { background: #dc2626; }
+    .add-checklist-container { display: flex; gap: 5px; margin-bottom: 10px; }
+    .add-checklist-container input[type="text"] { flex: 1; }
+    .photo-preview { max-width: 100%; border-radius: 12px; display: block; }
+    .photo-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; }
   </style>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -149,37 +92,37 @@
   <canvas id="pieChartCanvas" width="300" height="300" style="display:none;"></canvas>
 
   <script>
-    let chantiers = JSON.parse(localStorage.getItem("chantiersListe") || "[]");
+    // Gestion chantiers
     const chantierSelect = document.getElementById("chantierSelect");
+    let chantiers = JSON.parse(localStorage.getItem("chantiersListe") || "[]");
 
     function afficherChantiers() {
       chantierSelect.innerHTML = "";
-      chantiers.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+      chantiers.sort();
       chantiers.forEach(nom => {
         const option = document.createElement("option");
         option.value = nom;
         option.textContent = nom;
         chantierSelect.appendChild(option);
       });
+
       const chantierSauvegarde = localStorage.getItem("chantierSelectionne");
       if (chantierSauvegarde) chantierSelect.value = chantierSauvegarde;
     }
 
     function ajouterChantier() {
-      const input = document.getElementById("nouveauChantier");
-      const nom = input.value.trim();
+      const nom = document.getElementById("nouveauChantier").value.trim();
       if (!nom || chantiers.includes(nom)) return;
       chantiers.push(nom);
       localStorage.setItem("chantiersListe", JSON.stringify(chantiers));
-      input.value = "";
       afficherChantiers();
+      document.getElementById("nouveauChantier").value = "";
     }
 
     function supprimerChantier() {
       const selected = chantierSelect.value;
-      if (!selected) return;
-      if (!confirm(`Supprimer le chantier "${selected}" ?`)) return;
-      chantiers = chantiers.filter(n => n !== selected);
+      if (!selected || !confirm("Supprimer ce chantier ?")) return;
+      chantiers = chantiers.filter(c => c !== selected);
       localStorage.setItem("chantiersListe", JSON.stringify(chantiers));
       afficherChantiers();
     }
@@ -188,24 +131,41 @@
       localStorage.setItem("chantierSelectionne", chantierSelect.value);
     });
 
+    document.addEventListener("DOMContentLoaded", () => {
+      afficherChantiers();
+      checklistInitiales();
+    });
+
     function ajouterLigneChecklist(nom = null) {
       const input = document.getElementById("newChecklistItem");
       if (!nom) nom = input.value.trim();
       if (!nom) return;
+
       const radioName = "c_" + nom.replace(/\s+/g, "_");
-      const container = document.getElementById("checklistContainer");
-      const item = document.createElement("div");
-      item.className = "checklist-item";
-      item.innerHTML = `
+      const div = document.createElement("div");
+      div.className = "checklist-item";
+      div.innerHTML = `
         <input type="checkbox" class="delete-checkbox" />
         <span>${nom}</span>
         <div class="checklist-options">
           <label><input type="radio" name="${radioName}" value="Bon" /> ✅ Bon</label>
           <label><input type="radio" name="${radioName}" value="Passable" /> ⚠ Passable</label>
           <label><input type="radio" name="${radioName}" value="Mal fait" /> ❌ Mal fait</label>
-        </div>`;
-      container.appendChild(item);
+        </div>
+      `;
+      document.getElementById("checklistContainer").appendChild(div);
       input.value = "";
+    }
+
+    function checklistInitiales() {
+      [
+        "Nettoyage digicodes/interphone", "Vitrerie miroiterie", "Encadrements vitres/portes",
+        "Tapis", "Aspirateur sols", "Lavage sols", "Escaliers services",
+        "Toiles d'araignées", "Rampes/gardes corps", "Porte de service",
+        "Gaines techniques", "Plinthes", "Boîtes aux lettres",
+        "Vidage poubelle", "Poche poubelle", "Ascenseurs (int/ext)",
+        "Rails ascenseur", "Commandes ascenseur", "Conteneurs", "Local conteneurs"
+      ].forEach(n => ajouterLigneChecklist(n));
     }
 
     function supprimerLignesSelectionnees() {
@@ -214,31 +174,46 @@
       });
     }
 
-    function ajouterLigneChecklistInitiales() {
-      [
-        "Nettoyage digicodes/interphone", "Vitrerie miroiterie", "Encadrements vitres/portes",
-        "Tapis", "Aspirateur sols", "Lavage sols", "Escaliers services",
-        "Toiles d'araignées", "Rampes/gardes corps", "Porte de service",
-        "Gaines techniques", "Plinthes", "Boîtes aux lettres",
-        "Vidage poubelle", "Poche poubelle", "Ascenseurs (int/ext)",
-        "Rails ascenseur", "Commandes ascenseur", "Conteneurs", "Local conteneurs"
-      ].forEach(nom => ajouterLigneChecklist(nom));
-    }
+    const photoInput = document.getElementById("photos");
+    const photoGallery = document.getElementById("photoGallery");
+    let photoDataUrls = [];
 
-    document.addEventListener("DOMContentLoaded", () => {
-      afficherChantiers();
-      ajouterLigneChecklistInitiales();
+    photoInput.addEventListener("change", function () {
+      Array.from(this.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const scale = Math.min(1000 / img.width, 1);
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+            photoDataUrls.push(dataUrl);
+            const thumb = document.createElement("img");
+            thumb.src = dataUrl;
+            thumb.className = "photo-preview";
+            photoGallery.appendChild(thumb);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+      this.value = "";
     });
 
     async function genererPDF() {
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      const chantier = chantierSelect.value || "Sans nom";
+      const chantier = chantierSelect.value;
       const observations = document.getElementById("observations").value;
       const items = document.querySelectorAll(".checklist-item");
-      const date = new Date().toLocaleString('fr-FR');
+      const date = new Date().toLocaleString("fr-FR");
       let bon = 0, passable = 0, mal = 0;
-      let y = 15;
+
+      const doc = new jsPDF();
+      let y = 10;
 
       doc.setFontSize(16);
       doc.setTextColor(16, 185, 129);
@@ -249,64 +224,55 @@
       doc.text(`Chantier : ${chantier}`, 10, y);
       y += 8;
       doc.text(`Date : ${date}`, 10, y);
-      y += 12;
+      y += 10;
 
-      items.forEach((item) => {
+      items.forEach(item => {
         const nom = item.querySelector("span").textContent;
         const radios = item.querySelectorAll("input[type='radio']");
         let result = "non évalué";
         radios.forEach(r => { if (r.checked) result = r.value; });
+
         if (result === "Bon") bon++;
         else if (result === "Passable") passable++;
         else if (result === "Mal fait") mal++;
+
         doc.text(`- ${nom} : ${result}`, 10, y);
-        y += 8;
-        if (y > 270) { doc.addPage(); y = 15; }
+        y += 6;
+        if (y > 270) { doc.addPage(); y = 10; }
       });
 
-      y += 5;
-      doc.text("Observations :", 10, y);
-      y += 8;
+      doc.text("Observations :", 10, y); y += 8;
       doc.text(doc.splitTextToSize(observations, 180), 10, y);
 
       const total = bon + passable + mal;
       const score = total === 0 ? 0 : Math.round(((bon * 100 + passable * 50) / (total * 100)) * 100);
+
       const resultats = JSON.parse(localStorage.getItem("resultatsQualite") || "[]");
       resultats.push({ chantier, date, score });
       localStorage.setItem("resultatsQualite", JSON.stringify(resultats));
 
-      new Chart(document.getElementById("pieChartCanvas"), {
+      const pieCanvas = document.getElementById("pieChartCanvas");
+      new Chart(pieCanvas, {
         type: "pie",
         data: {
           labels: ["Bon", "Passable", "Mal fait"],
-          datasets: [{
-            data: [bon, passable, mal],
-            backgroundColor: ["#10b981", "#f59e0b", "#ef4444"]
-          }]
+          datasets: [{ data: [bon, passable, mal], backgroundColor: ["#10b981", "#f59e0b", "#ef4444"] }]
         },
         options: { responsive: false }
       });
 
       setTimeout(() => {
-        html2canvas(document.getElementById("pieChartCanvas")).then(canvas => {
-          const imgData = canvas.toDataURL("image/png");
+        html2canvas(pieCanvas).then(canvas => {
           doc.addPage();
-          doc.text("Score global : " + score + "/100", 10, 20);
-          doc.addImage(imgData, "PNG", 40, 40, 120, 120);
+          doc.text(`Score global : ${score}/100`, 10, 20);
+          doc.addImage(canvas.toDataURL("image/png"), "PNG", 40, 30, 120, 120);
 
-          const pdfFile = doc.output("blob");
-          const reader = new FileReader();
-          reader.onloadend = function () {
-            const base64 = reader.result;
-            const pdfs = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
-            pdfs.push({ chantier, date, nom: `rapport-${chantier}-${date}.pdf`, base64 });
-            localStorage.setItem("pdfsStockes", JSON.stringify(pdfs));
+          const pdfBase64 = doc.output("datauristring");
+          const pdfs = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
+          pdfs.push({ chantier, date, nom: `rapport-${chantier}-${date}.pdf`, base64: pdfBase64 });
+          localStorage.setItem("pdfsStockes", JSON.stringify(pdfs));
 
-            // Ouvre le PDF dans un nouvel onglet
-            const blobUrl = URL.createObjectURL(pdfFile);
-            window.open(blobUrl, "_blank");
-          };
-          reader.readAsDataURL(pdfFile);
+          window.open(pdfBase64, "_blank");
         });
       }, 500);
     }
