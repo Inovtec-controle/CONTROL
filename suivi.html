@@ -7,140 +7,129 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, sans-serif;
-      background: #f0f2f5;
-      padding: 20px;
-      max-width: 700px;
+      background: #f9fafb;
+      max-width: 750px;
       margin: auto;
+      padding: 20px;
     }
     h1 {
-      text-align: center;
       color: #10b981;
+      text-align: center;
       margin-bottom: 20px;
     }
-    .pdf-entry {
-      background: white;
+    .pdf-card {
+      background: #fff;
       padding: 15px;
-      margin-bottom: 12px;
-      border-radius: 10px;
+      border-radius: 12px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
     }
     .pdf-info {
-      flex: 1 1 70%;
+      flex: 1;
+      margin-right: 10px;
     }
     .pdf-info strong {
       display: block;
-      margin-bottom: 5px;
-      font-size: 15px;
+      font-size: 16px;
+      color: #111827;
     }
-    .pdf-info small {
-      color: gray;
+    .pdf-info span {
+      font-size: 14px;
+      color: #6b7280;
     }
-    .pdf-actions {
-      flex: 1 1 25%;
+    .btn-row {
       display: flex;
-      gap: 5px;
-      justify-content: flex-end;
+      gap: 8px;
     }
     button {
-      padding: 6px 12px;
+      padding: 8px 12px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 13px;
-    }
-    .btn-view {
-      background-color: #10b981;
+      font-size: 14px;
       color: white;
     }
-    .btn-view:hover {
-      background-color: #059669;
-    }
-    .btn-delete {
-      background-color: #ef4444;
-      color: white;
-    }
-    .btn-delete:hover {
-      background-color: #dc2626;
-    }
-    .btn-back {
-      margin-top: 20px;
+    .btn-open { background-color: #10b981; }
+    .btn-open:hover { background-color: #059669; }
+    .btn-delete { background-color: #ef4444; }
+    .btn-delete:hover { background-color: #dc2626; }
+    .back-button {
       display: block;
-      width: 100%;
-      background-color: #374151;
+      text-align: center;
+      margin-top: 20px;
+      text-decoration: none;
+      background: #10b981;
       color: white;
       padding: 10px;
-      text-align: center;
       border-radius: 8px;
-      text-decoration: none;
     }
   </style>
 </head>
 <body>
-  <h1>📄 Suivi de Qualité</h1>
+  <h1>Suivi de Qualité</h1>
+
   <div id="pdfList"></div>
-  <a href="controle.html" class="btn-back">← Retour au contrôle</a>
+
+  <a href="controle.html" class="back-button">⬅ Retour au contrôle qualité</a>
 
   <script>
+    const chantier = localStorage.getItem("chantierSelectionne");
     const pdfList = document.getElementById("pdfList");
-    const chantierActuel = localStorage.getItem("chantierSelectionne") || "";
+    const allPDFs = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
+    const filteredPDFs = allPDFs.filter(p => p.chantier === chantier);
 
     function afficherPDFs() {
       pdfList.innerHTML = "";
-      const pdfs = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
-      const filtre = pdfs.filter(pdf => pdf.chantier === chantierActuel);
-
-      if (filtre.length === 0) {
-        pdfList.innerHTML = `<p>Aucun rapport trouvé pour le chantier : <strong>${chantierActuel || "non sélectionné"}</strong>.</p>`;
+      if (filteredPDFs.length === 0) {
+        pdfList.innerHTML = `<p style="text-align:center; color:gray;">Aucun PDF trouvé pour le chantier : <strong>${chantier}</strong></p>`;
         return;
       }
 
-      filtre.forEach((pdf, index) => {
-        const div = document.createElement("div");
-        div.className = "pdf-entry";
+      filteredPDFs.forEach((pdf, index) => {
+        const card = document.createElement("div");
+        card.className = "pdf-card";
 
         const info = document.createElement("div");
         info.className = "pdf-info";
-        info.innerHTML = `
-          <strong>${pdf.nom}</strong>
-          <small>Date : ${pdf.date}</small>
-        `;
+        info.innerHTML = `<strong>${pdf.nom}</strong><span>${pdf.date}</span>`;
 
-        const actions = document.createElement("div");
-        actions.className = "pdf-actions";
+        const buttons = document.createElement("div");
+        buttons.className = "btn-row";
 
-        const btnView = document.createElement("button");
-        btnView.className = "btn-view";
-        btnView.textContent = "👁️ Voir";
-        btnView.onclick = () => {
-          const win = window.open();
-          win.document.write(`<iframe src="${pdf.base64}" frameborder="0" style="width:100%;height:100vh;"></iframe>`);
+        const btnOpen = document.createElement("button");
+        btnOpen.className = "btn-open";
+        btnOpen.textContent = "📂 Ouvrir";
+        btnOpen.onclick = () => {
+          const newTab = window.open();
+          newTab.document.write(`<iframe width='100%' height='100%' src='${pdf.base64}'></iframe>`);
         };
 
         const btnDelete = document.createElement("button");
         btnDelete.className = "btn-delete";
-        btnDelete.textContent = "🗑 Suppr.";
+        btnDelete.textContent = "🗑 Supprimer";
         btnDelete.onclick = () => {
-          if (!confirm("Supprimer ce rapport ?")) return;
-          const tous = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
-          const reste = tous.filter(p => p !== pdf);
-          localStorage.setItem("pdfsStockes", JSON.stringify(reste));
-          afficherPDFs();
+          if (confirm("Supprimer ce PDF ?")) {
+            const all = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
+            all.splice(index, 1);
+            localStorage.setItem("pdfsStockes", JSON.stringify(all));
+            location.reload();
+          }
         };
 
-        actions.appendChild(btnView);
-        actions.appendChild(btnDelete);
+        buttons.appendChild(btnOpen);
+        buttons.appendChild(btnDelete);
 
-        div.appendChild(info);
-        div.appendChild(actions);
-        pdfList.appendChild(div);
+        card.appendChild(info);
+        card.appendChild(buttons);
+        pdfList.appendChild(card);
       });
     }
 
-    document.addEventListener("DOMContentLoaded", afficherPDFs);
+    afficherPDFs();
   </script>
 </body>
 </html>
