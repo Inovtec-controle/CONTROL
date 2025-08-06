@@ -39,42 +39,70 @@
     .btn:hover {
       background: #059669;
     }
+    .pdf-list {
+      margin-top: 30px;
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .pdf-list h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #374151;
+    }
+    .pdf-list ul {
+      list-style: none;
+      padding: 0;
+    }
+    .pdf-list li {
+      margin: 5px 0;
+    }
+    .pdf-list a {
+      text-decoration: none;
+      color: #2563eb;
+    }
   </style>
 </head>
 <body>
   <h1>Suivi de la Qualité</h1>
   <canvas id="graphiqueQualite" width="800" height="400"></canvas>
 
+  <div class="pdf-list" id="pdfListContainer">
+    <h2>PDF générés pour ce chantier :</h2>
+    <ul id="pdfList"></ul>
+  </div>
+
   <div style="text-align:center;">
     <button class="btn" onclick="window.location.href='controle.html'">⬅ Retour au contrôle</button>
   </div>
 
   <script>
-    const ctx = document.getElementById('graphiqueQualite').getContext('2d');
+    const chantierSelectionne = localStorage.getItem("chantierSelectionne");
     const donnees = JSON.parse(localStorage.getItem("resultatsQualite") || "[]");
 
-    // Grouper les scores par chantier
-    const groupes = {};
-    donnees.forEach(entry => {
-      if (!groupes[entry.chantier]) groupes[entry.chantier] = [];
-      groupes[entry.chantier].push({
-        x: new Date(entry.date),
-        y: entry.score
-      });
-    });
+    // Filtrer les données pour le chantier sélectionné
+    const donneesFiltrees = donnees.filter(d => d.chantier === chantierSelectionne);
 
-    const couleurs = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#6366f1', '#14b8a6'];
-    const datasets = Object.entries(groupes).map(([chantier, valeurs], i) => ({
-      label: chantier,
-      data: valeurs,
-      borderColor: couleurs[i % couleurs.length],
-      backgroundColor: couleurs[i % couleurs.length],
-      tension: 0.2
+    // Construire les points pour le graphique
+    const points = donneesFiltrees.map(entry => ({
+      x: new Date(entry.date),
+      y: entry.score
     }));
 
+    // Dessiner le graphique
+    const ctx = document.getElementById('graphiqueQualite').getContext('2d');
     new Chart(ctx, {
       type: 'line',
-      data: { datasets },
+      data: {
+        datasets: [{
+          label: chantierSelectionne || "Chantier",
+          data: points,
+          borderColor: '#10b981',
+          backgroundColor: '#10b981',
+          tension: 0.2
+        }]
+      },
       options: {
         responsive: true,
         scales: {
@@ -99,6 +127,47 @@
         }
       }
     });
+
+    // Lister les PDF générés pour ce chantier
+    async function listerPDF() {
+      const liste = document.getElementById("pdfList");
+
+      // Remplacer ceci par l'URL de ton dossier contenant les PDF, si hébergé
+      const dossier = ".";
+
+      // Lecture des fichiers (nécessite un backend ou GitHub Pages avec liste activée)
+      try {
+        const res = await fetch(dossier);
+        const html = await res.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        const liens = Array.from(doc.querySelectorAll("a"));
+
+        const fichiersPDF = liens
+          .map(a => a.getAttribute("href"))
+          .filter(href => href.endsWith(".pdf") && href.includes(chantierSelectionne));
+
+        if (fichiersPDF.length === 0) {
+          liste.innerHTML = "<li>Aucun PDF trouvé pour ce chantier.</li>";
+        } else {
+          fichiersPDF.forEach(fichier => {
+            const nomFichier = fichier.split('/').pop();
+            const lien = document.createElement("a");
+            lien.href = fichier;
+            lien.textContent = nomFichier;
+            lien.target = "_blank";
+            const li = document.createElement("li");
+            li.appendChild(lien);
+            liste.appendChild(li);
+          });
+        }
+      } catch (err) {
+        console.error("Erreur lors du listing des PDF :", err);
+        liste.innerHTML = "<li>Impossible de charger les fichiers PDF (accès refusé ?).</li>";
+      }
+    }
+
+    listerPDF();
   </script>
 </body>
 </html>
