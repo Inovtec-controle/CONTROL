@@ -2,110 +2,145 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Suivi de Qualité</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, sans-serif;
-      background-color: #f9fafb;
-      padding: 10px;
-      max-width: 750px;
+      background: #f0f2f5;
+      padding: 20px;
+      max-width: 700px;
       margin: auto;
     }
     h1 {
       text-align: center;
       color: #10b981;
-      font-size: 22px;
       margin-bottom: 20px;
     }
-    .card {
-      background-color: white;
-      border-radius: 16px;
+    .pdf-entry {
+      background: white;
       padding: 15px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      margin-bottom: 15px;
-    }
-    .pdf-item {
+      margin-bottom: 12px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid #eee;
+      flex-wrap: wrap;
     }
-    .pdf-name {
-      font-size: 14px;
-      flex: 1;
+    .pdf-info {
+      flex: 1 1 70%;
     }
-    .pdf-actions button {
-      background-color: #10b981;
+    .pdf-info strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 15px;
+    }
+    .pdf-info small {
+      color: gray;
+    }
+    .pdf-actions {
+      flex: 1 1 25%;
+      display: flex;
+      gap: 5px;
+      justify-content: flex-end;
+    }
+    button {
+      padding: 6px 12px;
       border: none;
       border-radius: 6px;
-      color: white;
-      padding: 5px 10px;
-      font-size: 12px;
-      margin-left: 6px;
       cursor: pointer;
+      font-size: 13px;
     }
-    .pdf-actions button:hover {
+    .btn-view {
+      background-color: #10b981;
+      color: white;
+    }
+    .btn-view:hover {
       background-color: #059669;
     }
-    .btn-danger {
+    .btn-delete {
       background-color: #ef4444;
+      color: white;
     }
-    .btn-danger:hover {
+    .btn-delete:hover {
       background-color: #dc2626;
     }
-    .no-result {
-      text-align: center;
-      color: #777;
-      font-size: 14px;
-      margin-top: 20px;
-    }
     .btn-back {
+      margin-top: 20px;
       display: block;
-      margin: 20px auto 0;
-      text-align: center;
-      background: #10b981;
+      width: 100%;
+      background-color: #374151;
       color: white;
-      border: none;
+      padding: 10px;
+      text-align: center;
       border-radius: 8px;
-      padding: 10px 15px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    .btn-back:hover {
-      background-color: #059669;
+      text-decoration: none;
     }
   </style>
 </head>
 <body>
-  <h1>📈 Suivi de Qualité</h1>
-
-  <div id="pdfList" class="card"></div>
-
-  <button class="btn-back" onclick="location.href='controle.html'">⬅ Retour au contrôle</button>
+  <h1>📄 Suivi de Qualité</h1>
+  <div id="pdfList"></div>
+  <a href="controle.html" class="btn-back">← Retour au contrôle</a>
 
   <script>
-    function chargerPDFs() {
-      const pdfContainer = document.getElementById("pdfList");
-      const chantier = localStorage.getItem("chantierSelectionne") || "";
-      const tousLesPDFs = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
+    const pdfList = document.getElementById("pdfList");
+    const chantierActuel = localStorage.getItem("chantierSelectionne") || "";
 
-      const pdfsChantier = tousLesPDFs.filter(p => p.chantier === chantier);
+    function afficherPDFs() {
+      pdfList.innerHTML = "";
+      const pdfs = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
+      const filtre = pdfs.filter(pdf => pdf.chantier === chantierActuel);
 
-      if (pdfsChantier.length === 0) {
-        pdfContainer.innerHTML = `<p class="no-result">Aucun rapport trouvé pour le chantier : <strong>${chantier || "Non défini"}</strong></p>`;
+      if (filtre.length === 0) {
+        pdfList.innerHTML = `<p>Aucun rapport trouvé pour le chantier : <strong>${chantierActuel || "non sélectionné"}</strong>.</p>`;
         return;
       }
 
-      pdfContainer.innerHTML = "";
-      pdfsChantier.forEach((pdf, index) => {
+      filtre.forEach((pdf, index) => {
         const div = document.createElement("div");
-        div.className = "pdf-item";
+        div.className = "pdf-entry";
 
-        const nomAffiche = pdf.nom.length > 50 ? pdf.nom.slice(0, 47) + "..." : pdf.nom;
+        const info = document.createElement("div");
+        info.className = "pdf-info";
+        info.innerHTML = `
+          <strong>${pdf.nom}</strong>
+          <small>Date : ${pdf.date}</small>
+        `;
 
-        div.innerHTML = `
-          <span class="pdf-name">${nomAffiche}</span>
-          <div class="pdf-actions">
-            <button onclick="ouvr
+        const actions = document.createElement("div");
+        actions.className = "pdf-actions";
+
+        const btnView = document.createElement("button");
+        btnView.className = "btn-view";
+        btnView.textContent = "👁️ Voir";
+        btnView.onclick = () => {
+          const win = window.open();
+          win.document.write(`<iframe src="${pdf.base64}" frameborder="0" style="width:100%;height:100vh;"></iframe>`);
+        };
+
+        const btnDelete = document.createElement("button");
+        btnDelete.className = "btn-delete";
+        btnDelete.textContent = "🗑 Suppr.";
+        btnDelete.onclick = () => {
+          if (!confirm("Supprimer ce rapport ?")) return;
+          const tous = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
+          const reste = tous.filter(p => p !== pdf);
+          localStorage.setItem("pdfsStockes", JSON.stringify(reste));
+          afficherPDFs();
+        };
+
+        actions.appendChild(btnView);
+        actions.appendChild(btnDelete);
+
+        div.appendChild(info);
+        div.appendChild(actions);
+        pdfList.appendChild(div);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", afficherPDFs);
+  </script>
+</body>
+</html>
