@@ -96,6 +96,7 @@
       padding: 16px;
       background: #fff;
       overflow-y: auto;
+      max-height: calc(100vh - 200px); /* ✅ S'adapte à l'écran */
     }
 
     .details h2 {
@@ -110,7 +111,8 @@
       font-size: 0.95em;
     }
 
-    .details input, .details textarea {
+    .details input,
+    .details textarea {
       width: 100%;
       padding: 10px;
       font-size: 1em;
@@ -147,6 +149,7 @@
       }
       .details {
         width: 65%;
+        max-height: none;
       }
     }
   </style>
