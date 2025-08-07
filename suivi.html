@@ -1,124 +1,153 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Suivi de Qualité</title>
+  <title>Suivi de Qualité - PDF</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      background: #f0f2f5;
-      padding: 10px;
-      max-width: 750px;
-      margin: auto;
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      padding: 20px;
     }
+
     h1 {
       text-align: center;
-      color: #10b981;
-      font-size: 22px;
-      margin: 10px 0;
+      color: #333;
     }
-    .card {
-      background: white;
-      border-radius: 16px;
-      padding: 15px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      margin-bottom: 20px;
+
+    .pdf-list {
+      margin-top: 20px;
     }
+
     .pdf-item {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px;
-      border-bottom: 1px dashed #ccc;
     }
-    .pdf-info {
-      font-size: 14px;
+
+    .pdf-item span {
+      word-break: break-all;
     }
-    .btn-row {
-      display: flex;
-      gap: 10px;
-    }
-    button {
-      background: #10b981;
-      color: white;
+
+    .pdf-actions button {
+      margin-left: 10px;
       padding: 6px 10px;
       border: none;
-      border-radius: 6px;
-      font-size: 12px;
+      border-radius: 4px;
       cursor: pointer;
     }
-    button:hover {
-      background: #059669;
+
+    .view-btn {
+      background: #4CAF50;
+      color: white;
     }
-    .btn-danger {
-      background: #ef4444;
+
+    .delete-btn {
+      background: #f44336;
+      color: white;
     }
-    .btn-danger:hover {
-      background: #dc2626;
+
+    .no-pdf {
+      text-align: center;
+      color: #777;
+      margin-top: 40px;
+    }
+
+    .back-btn {
+      margin-top: 20px;
+      display: block;
+      text-align: center;
+      background: #2196F3;
+      color: white;
+      padding: 10px;
+      text-decoration: none;
+      border-radius: 5px;
     }
   </style>
 </head>
 <body>
   <h1>Suivi de Qualité</h1>
-
-  <div class="card" id="pdfListContainer">
-    <!-- PDF items ajoutés dynamiquement ici -->
-  </div>
+  <div class="pdf-list" id="pdfList"></div>
+  <div class="no-pdf" id="noPdfMessage" style="display:none;">Aucun PDF disponible pour ce chantier.</div>
+  <a href="controle.html" class="back-btn">Retour au contrôle</a>
 
   <script>
-    const chantier = localStorage.getItem("chantierSelectionne");
-    const pdfs = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
-    const pdfList = document.getElementById("pdfListContainer");
+    document.addEventListener("DOMContentLoaded", () => {
+      const chantierSelectionne = localStorage.getItem("chantierSelectionne");
+      const pdfListContainer = document.getElementById("pdfList");
+      const noPdfMessage = document.getElementById("noPdfMessage");
 
-    function afficherPDFs() {
-      pdfList.innerHTML = "";
-      const selection = pdfs.filter(pdf => pdf.chantier === chantier);
-
-      if (selection.length === 0) {
-        pdfList.innerHTML = `<p style="text-align:center;">Aucun rapport trouvé pour le chantier <strong>${chantier}</strong>.</p>`;
+      if (!chantierSelectionne) {
+        noPdfMessage.textContent = "Aucun chantier sélectionné.";
+        noPdfMessage.style.display = "block";
         return;
       }
 
-      selection.forEach((pdf, index) => {
-        const div = document.createElement("div");
-        div.className = "pdf-item";
-        div.innerHTML = `
-          <div class="pdf-info">
-            <strong>${pdf.nom}</strong><br />
-            <small>${pdf.date}</small>
-          </div>
-          <div class="btn-row">
-            <button onclick="telecharger('${index}')">📥</button>
-            <button class="btn-danger" onclick="supprimer(${index})">❌</button>
-          </div>
-        `;
-        pdfList.appendChild(div);
+      const pdfs = JSON.parse(localStorage.getItem("pdfs") || "[]");
+
+      const pdfsPourChantier = pdfs.filter(pdf => pdf.chantier === chantierSelectionne);
+
+      if (pdfsPourChantier.length === 0) {
+        noPdfMessage.style.display = "block";
+        return;
+      }
+
+      pdfsPourChantier.forEach((pdf, index) => {
+        const pdfItem = document.createElement("div");
+        pdfItem.className = "pdf-item";
+
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = pdf.nom;
+
+        const actionsDiv = document.createElement("div");
+        actionsDiv.className = "pdf-actions";
+
+        const viewBtn = document.createElement("button");
+        viewBtn.textContent = "Télécharger";
+        viewBtn.className = "view-btn";
+        viewBtn.onclick = () => {
+          const blob = base64ToBlob(pdf.data, "application/pdf");
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = pdf.nom;
+          a.click();
+          URL.revokeObjectURL(url);
+        };
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Supprimer";
+        deleteBtn.className = "delete-btn";
+        deleteBtn.onclick = () => {
+          if (confirm("Supprimer ce fichier PDF ?")) {
+            const nouveauPDFs = pdfs.filter((_, i) => i !== pdfs.indexOf(pdf));
+            localStorage.setItem("pdfs", JSON.stringify(nouveauPDFs));
+            location.reload();
+          }
+        };
+
+        actionsDiv.appendChild(viewBtn);
+        actionsDiv.appendChild(deleteBtn);
+        pdfItem.appendChild(nameSpan);
+        pdfItem.appendChild(actionsDiv);
+        pdfListContainer.appendChild(pdfItem);
       });
-    }
+    });
 
-    function telecharger(index) {
-      const selection = pdfs.filter(pdf => pdf.chantier === chantier);
-      const pdf = selection[index];
-      const link = document.createElement("a");
-      link.href = pdf.base64;
-      link.download = pdf.nom;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    function base64ToBlob(base64, type = "application/octet-stream") {
+      const binary = atob(base64);
+      const array = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        array[i] = binary.charCodeAt(i);
+      }
+      return new Blob([array], { type });
     }
-
-    function supprimer(index) {
-      if (!confirm("Supprimer ce PDF ?")) return;
-      const all = pdfs.filter(pdf => pdf.chantier !== chantier);
-      const selection = pdfs.filter(pdf => pdf.chantier === chantier);
-      selection.splice(index, 1);
-      const updated = [...all, ...selection];
-      localStorage.setItem("pdfsStockes", JSON.stringify(updated));
-      afficherPDFs();
-    }
-
-    afficherPDFs();
   </script>
 </body>
 </html>
