@@ -1,153 +1,156 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Suivi de Qualité - PDF</title>
+  <title>Suivi Qualité - Chantiers</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #f0f2f5;
+      padding: 10px;
+      max-width: 750px;
+      margin: auto;
     }
-
     h1 {
       text-align: center;
-      color: #333;
+      color: #10b981;
+      font-size: 22px;
+      margin-bottom: 20px;
     }
-
-    .pdf-list {
-      margin-top: 20px;
-    }
-
-    .pdf-item {
-      background: #fff;
-      padding: 15px;
-      margin-bottom: 10px;
+    select {
+      width: 100%;
+      padding: 10px;
+      font-size: 14px;
+      margin-bottom: 15px;
       border-radius: 8px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      border: 1px solid #ccc;
+    }
+    .pdf-card {
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
+      gap: 10px;
     }
-
-    .pdf-item span {
-      word-break: break-all;
+    .pdf-name {
+      font-weight: 600;
+      font-size: 14px;
     }
-
-    .pdf-actions button {
-      margin-left: 10px;
-      padding: 6px 10px;
+    .btn-row {
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      flex: 1;
+      background: #10b981;
+      color: white;
+      padding: 8px;
       border: none;
-      border-radius: 4px;
+      border-radius: 8px;
+      font-size: 14px;
       cursor: pointer;
     }
-
-    .view-btn {
-      background: #4CAF50;
-      color: white;
+    button:hover {
+      background: #059669;
     }
-
-    .delete-btn {
-      background: #f44336;
-      color: white;
+    .btn-danger {
+      background: #ef4444;
     }
-
-    .no-pdf {
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+    .empty {
       text-align: center;
-      color: #777;
-      margin-top: 40px;
-    }
-
-    .back-btn {
-      margin-top: 20px;
-      display: block;
-      text-align: center;
-      background: #2196F3;
-      color: white;
-      padding: 10px;
-      text-decoration: none;
-      border-radius: 5px;
+      font-size: 14px;
+      color: #888;
+      margin-top: 30px;
     }
   </style>
 </head>
 <body>
-  <h1>Suivi de Qualité</h1>
-  <div class="pdf-list" id="pdfList"></div>
-  <div class="no-pdf" id="noPdfMessage" style="display:none;">Aucun PDF disponible pour ce chantier.</div>
-  <a href="controle.html" class="back-btn">Retour au contrôle</a>
+  <h1>Suivi Qualité - Chantiers</h1>
+
+  <select id="chantierSelect" onchange="afficherPDFs()"></select>
+
+  <div id="pdfList"></div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const chantierSelectionne = localStorage.getItem("chantierSelectionne");
-      const pdfListContainer = document.getElementById("pdfList");
-      const noPdfMessage = document.getElementById("noPdfMessage");
+    const chantierSelect = document.getElementById('chantierSelect');
+    const pdfList = document.getElementById('pdfList');
 
-      if (!chantierSelectionne) {
-        noPdfMessage.textContent = "Aucun chantier sélectionné.";
-        noPdfMessage.style.display = "block";
+    // Récupère la liste des chantiers combinés (copropriétés + bureaux)
+    function chargerChantiers() {
+      const liste = JSON.parse(localStorage.getItem('listeChantiers')) || [];
+      const chantierActif = localStorage.getItem('chantierSelectionne') || '';
+      chantierSelect.innerHTML = '';
+      liste.sort().forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = c;
+        chantierSelect.appendChild(opt);
+      });
+      chantierSelect.value = chantierActif;
+      afficherPDFs();
+    }
+
+    // Affiche les PDF pour le chantier sélectionné
+    function afficherPDFs() {
+      const chantier = chantierSelect.value;
+      localStorage.setItem('chantierSelectionne', chantier);
+      const key = `pdfs_${chantier}`;
+      const pdfs = JSON.parse(localStorage.getItem(key)) || [];
+      pdfList.innerHTML = '';
+
+      if (pdfs.length === 0) {
+        pdfList.innerHTML = `<div class="empty">Aucun PDF disponible pour ce chantier.</div>`;
         return;
       }
 
-      const pdfs = JSON.parse(localStorage.getItem("pdfs") || "[]");
+      pdfs.forEach((pdf, index) => {
+        const card = document.createElement('div');
+        card.className = 'pdf-card';
 
-      const pdfsPourChantier = pdfs.filter(pdf => pdf.chantier === chantierSelectionne);
+        const title = document.createElement('div');
+        title.className = 'pdf-name';
+        title.textContent = pdf.nom;
 
-      if (pdfsPourChantier.length === 0) {
-        noPdfMessage.style.display = "block";
-        return;
-      }
+        const btnRow = document.createElement('div');
+        btnRow.className = 'btn-row';
 
-      pdfsPourChantier.forEach((pdf, index) => {
-        const pdfItem = document.createElement("div");
-        pdfItem.className = "pdf-item";
-
-        const nameSpan = document.createElement("span");
-        nameSpan.textContent = pdf.nom;
-
-        const actionsDiv = document.createElement("div");
-        actionsDiv.className = "pdf-actions";
-
-        const viewBtn = document.createElement("button");
-        viewBtn.textContent = "Télécharger";
-        viewBtn.className = "view-btn";
-        viewBtn.onclick = () => {
-          const blob = base64ToBlob(pdf.data, "application/pdf");
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = pdf.nom;
-          a.click();
-          URL.revokeObjectURL(url);
+        const telechargerBtn = document.createElement('button');
+        telechargerBtn.textContent = '📥 Télécharger';
+        telechargerBtn.onclick = () => {
+          const link = document.createElement('a');
+          link.href = pdf.contenu;
+          link.download = pdf.nom;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
         };
 
-        const deleteBtn = document.createElement("button");
-        deleteBtn.textContent = "Supprimer";
-        deleteBtn.className = "delete-btn";
-        deleteBtn.onclick = () => {
-          if (confirm("Supprimer ce fichier PDF ?")) {
-            const nouveauPDFs = pdfs.filter((_, i) => i !== pdfs.indexOf(pdf));
-            localStorage.setItem("pdfs", JSON.stringify(nouveauPDFs));
-            location.reload();
+        const supprimerBtn = document.createElement('button');
+        supprimerBtn.textContent = '🗑 Supprimer';
+        supprimerBtn.className = 'btn-danger';
+        supprimerBtn.onclick = () => {
+          if (confirm('Supprimer ce PDF ?')) {
+            pdfs.splice(index, 1);
+            localStorage.setItem(key, JSON.stringify(pdfs));
+            afficherPDFs();
           }
         };
 
-        actionsDiv.appendChild(viewBtn);
-        actionsDiv.appendChild(deleteBtn);
-        pdfItem.appendChild(nameSpan);
-        pdfItem.appendChild(actionsDiv);
-        pdfListContainer.appendChild(pdfItem);
+        btnRow.appendChild(telechargerBtn);
+        btnRow.appendChild(supprimerBtn);
+        card.appendChild(title);
+        card.appendChild(btnRow);
+        pdfList.appendChild(card);
       });
-    });
-
-    function base64ToBlob(base64, type = "application/octet-stream") {
-      const binary = atob(base64);
-      const array = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) {
-        array[i] = binary.charCodeAt(i);
-      }
-      return new Blob([array], { type });
     }
+
+    window.onload = chargerChantiers;
   </script>
 </body>
 </html>
