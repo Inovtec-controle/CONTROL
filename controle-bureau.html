@@ -142,7 +142,13 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
+<script src="common.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const select = document.getElementById("chantierSelect");
+    remplirMenuDeroulant(select);
+  });
+</script>
   <script>
     // GESTION CHANTIERS
     let chantiers = JSON.parse(localStorage.getItem("chantiersListe") || "[]");
