@@ -16,11 +16,13 @@
       align-items: center;
       justify-content: center;
     }
+
     h1 {
       color: #10b981;
       text-align: center;
       margin-bottom: 30px;
     }
+
     .menu {
       display: flex;
       flex-direction: column;
@@ -28,6 +30,7 @@
       width: 80%;
       max-width: 400px;
     }
+
     a, button {
       display: block;
       background: #10b981;
@@ -41,9 +44,11 @@
       border: none;
       cursor: pointer;
     }
+
     a:hover, button:hover {
       background: #059669;
     }
+
     #importFile {
       display: none;
     }
@@ -54,12 +59,12 @@
   <h1>Dashboard INOVTEC</h1>
 
   <div class="menu">
-    <a href="controle.html">Contrôle coproprieté</a>
+    <a href="controle.html">Contrôle Copropriété</a>
+    <a href="controle-bureau.html">Contrôle Bureau</a>
     <a href="employes.html">Liste des Employés</a>
     <a href="chantiers.html">Liste des Chantiers</a>
     <a href="suivis-variable.html">Variables</a>
 
-    <!-- Export/Import Buttons -->
     <button onclick="exporterDonnees()">Exporter les données</button>
     <button onclick="document.getElementById('importFile').click()">Importer les données</button>
     <input type="file" id="importFile" accept=".json" onchange="importerDonnees(event)">
