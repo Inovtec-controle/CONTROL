@@ -2,288 +2,152 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chantiers</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Chantiers | Édition Profil</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f9fafb;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-
-    header {
-      background: #10b981;
-      color: white;
-      padding: 15px;
-      text-align: center;
-      font-size: 20px;
-    }
-
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: auto;
-    }
-
-    .list {
-      background: #fff;
-      padding: 10px;
-      border-bottom: 1px solid #ccc;
-      overflow-y: auto;
-    }
-
-    .list h2 {
-      margin-top: 0;
-    }
-
-    .list ul {
-      list-style: none;
-      padding: 0;
-    }
-
-    .list li {
-      padding: 10px;
-      background: #f3f4f6;
-      margin-bottom: 8px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .list li:hover {
-      background: #e5e7eb;
-    }
-
-    .details {
-      flex: 1;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #f5f5f5;
       padding: 20px;
-      background: #fff;
-      overflow-y: auto;
-      max-height: calc(100vh - 250px);
+      margin: 0;
     }
-
-    .details label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
     }
-
-    .details input,
-    .details textarea,
     select {
+      display: block;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto 20px auto;
+      padding: 10px;
+      font-size: 16px;
+    }
+    #formulaireProfil {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      display: none;
+    }
+    .champ {
+      margin-bottom: 12px;
+    }
+    .champ label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .champ input {
       width: 100%;
       padding: 8px;
-      font-size: 14px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      margin-top: 5px;
+      box-sizing: border-box;
     }
-
-    .actions {
-      margin-top: 20px;
-    }
-
     button {
-      background: #10b981;
-      color: white;
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
+      padding: 10px 15px;
+      font-size: 15px;
+      margin-right: 10px;
       cursor: pointer;
-      margin-top: 10px;
     }
-
-    button:hover {
-      background: #059669;
-    }
-
-    .btn-danger {
-      background: #ef4444;
-    }
-
-    .btn-danger:hover {
-      background: #dc2626;
-    }
-
-    .select-section {
-      margin-top: 10px;
-    }
-
-    @media (min-width: 768px) {
-      main {
-        flex-direction: row;
-      }
-
-      .list {
-        width: 35%;
-        border-bottom: none;
-        border-right: 1px solid #ccc;
-      }
-
-      .details {
-        max-height: none;
-      }
-    }
+    #btnSauvegarder { background-color: #007bff; color: white; border: none; }
+    #btnSupprimer { background-color: #dc3545; color: white; border: none; }
   </style>
 </head>
 <body>
+  <h1>Chantiers | Édition Profil</h1>
 
-  <header>🏢 Gestion des Chantiers</header>
+  <select id="chantierSelect">
+    <option value="">Sélectionnez un chantier</option>
+  </select>
 
-  <main>
-    <div class="list">
-      <h2>📋 Liste des Chantiers</h2>
-
-      <div class="select-section">
-        <label for="chantierSelect">Menu déroulant :</label>
-        <select id="chantierSelect" onchange="afficherDetailsDepuisSelect()">
-          <option value="">-- Sélectionner un chantier --</option>
-        </select>
-      </div>
-
-      <input type="text" id="newNom" placeholder="Nom de la résidence..." />
-      <button onclick="ajouterChantier()">➕ Ajouter</button>
-      <button class="btn-danger" onclick="supprimerChantier()">🗑 Supprimer</button>
-
-      <ul id="chantierList"></ul>
-    </div>
-
-    <div class="details" id="chantierDetails" style="display: none;">
-      <h2>🔧 Détails du Chantier</h2>
-      <div id="formFields"></div>
-      <div class="actions">
-        <button onclick="sauvegarderChantier()">💾 Enregistrer</button>
-      </div>
-    </div>
-  </main>
+  <form id="formulaireProfil">
+    <div class="champ"><label>Adresse</label><input id="adresse" /></div>
+    <div class="champ"><label>Clé</label><input id="clef" /></div>
+    <div class="champ"><label>Contact</label><input id="contact" /></div>
+    <div class="champ"><label>Téléphone</label><input id="tel" /></div>
+    <div class="champ"><label>Email</label><input id="mail" /></div>
+    <div class="champ"><label>Syndic</label><input id="syndic" /></div>
+    <div class="champ"><label>Intervention</label><input id="intervention" /></div>
+    <div class="champ"><label>Agents</label><input id="agents" /></div>
+    <div class="champ"><label>Numéros Agents</label><input id="numAgents" /></div>
+    <div class="champ"><label>Jours de passage</label><input id="jours" /></div>
+    <div class="champ"><label>Tâches</label><input id="tache" /></div>
+    <div class="champ"><label>Code</label><input id="code" /></div>
+    <div class="champ"><label>Code Clé</label><input id="clefCode" /></div>
+    <button type="button" id="btnSauvegarder">Sauvegarder</button>
+    <button type="button" id="btnSupprimer">Supprimer Profil</button>
+  </form>
 
   <script>
-    let chantiers = JSON.parse(localStorage.getItem("chantiers") || "[]");
-    let selectedChantier = null;
+    const chantierSelect = document.getElementById("chantierSelect");
+    const form = document.getElementById("formulaireProfil");
+    const btnSauvegarder = document.getElementById("btnSauvegarder");
+    const btnSupprimer = document.getElementById("btnSupprimer");
 
-    const champs = [
-      "Nom de la résidence",
-      "N° De Clef",
-      "Adresse",
-      "Contact",
-      "Téléphone",
-      "Mails",
-      "Syndic",
-      "Intervention",
-      "Agents",
-      "Numéro Agents",
-      "Jour de passage",
-      "Tache",
-      "Code",
-      "clef",
-      "Sortie om",
-      "Sortie tr",
-      "Frange",
-      "type",
-      "ampoules néons",
-      "Type d'ampoules/néons",
-      "sac poubelle"
-    ];
+    const fields = ["adresse","clef","contact","tel","mail","syndic","intervention","agents","numAgents","jours","tache","code","clefCode"];
 
-    function afficherListe() {
-      const ul = document.getElementById("chantierList");
-      const select = document.getElementById("chantierSelect");
-      ul.innerHTML = "";
-      select.innerHTML = `<option value="">-- Sélectionner un chantier --</option>`;
-
-      // Tri alphabétique
-      chantiers.sort((a, b) => (a["Nom de la résidence"] || "").localeCompare(b["Nom de la résidence"] || "", 'fr', { sensitivity: 'base' }));
-
-      chantiers.forEach((chantier, index) => {
-        const li = document.createElement("li");
-        li.textContent = chantier["Nom de la résidence"];
-        li.onclick = () => afficherDetails(index);
-        ul.appendChild(li);
-
-        const option = document.createElement("option");
-        option.value = index;
-        option.textContent = chantier["Nom de la résidence"];
-        select.appendChild(option);
+    function chargerListeChantiers() {
+      const arr = JSON.parse(localStorage.getItem("listeChantiers")) || [];
+      arr.sort((a,b) => a.localeCompare(b));
+      chantierSelect.innerHTML = '<option value="">Sélectionnez un chantier</option>';
+      arr.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = c;
+        chantierSelect.appendChild(opt);
       });
     }
 
-    function ajouterChantier() {
-      const nom = document.getElementById("newNom").value.trim();
-      if (!nom) return;
-
-      const nouveau = {};
-      champs.forEach(ch => nouveau[ch] = "");
-      nouveau["Nom de la résidence"] = nom;
-
-      chantiers.push(nouveau);
-      localStorage.setItem("chantiers", JSON.stringify(chantiers));
-      document.getElementById("newNom").value = "";
-      afficherListe();
-    }
-
-    function afficherDetails(index) {
-      selectedChantier = index;
-      const chantier = chantiers[index];
-      const formFields = document.getElementById("formFields");
-      formFields.innerHTML = "";
-
-      champs.forEach(ch => {
-        const label = document.createElement("label");
-        label.textContent = ch;
-        const input = document.createElement("input");
-        input.value = chantier[ch] || "";
-        input.id = "champ_" + ch.replace(/\s+/g, "_");
-        formFields.appendChild(label);
-        formFields.appendChild(input);
-      });
-
-      document.getElementById("chantierDetails").style.display = "block";
-    }
-
-    function afficherDetailsDepuisSelect() {
-      const index = document.getElementById("chantierSelect").value;
-      if (index !== "") {
-        afficherDetails(Number(index));
-      }
-    }
-
-    function sauvegarderChantier() {
-      if (selectedChantier === null) return;
-
-      champs.forEach(ch => {
-        const val = document.getElementById("champ_" + ch.replace(/\s+/g, "_")).value;
-        chantiers[selectedChantier][ch] = val;
-      });
-
-      localStorage.setItem("chantiers", JSON.stringify(chantiers));
-      alert("✅ Chantier mis à jour !");
-      afficherListe();
-    }
-
-    function supprimerChantier() {
-      const select = document.getElementById("chantierSelect");
-      const index = select.value;
-      if (index === "") {
-        alert("Veuillez sélectionner un chantier à supprimer.");
+    function afficherProfil(nom) {
+      const profils = JSON.parse(localStorage.getItem("profilChantiers")) || {};
+      const p = profils[nom];
+      if (!p) {
+        form.reset();
         return;
       }
-
-      const nom = chantiers[index]["Nom de la résidence"];
-      if (!confirm(`Supprimer le chantier "${nom}" ?`)) return;
-
-      chantiers.splice(index, 1);
-      localStorage.setItem("chantiers", JSON.stringify(chantiers));
-      selectedChantier = null;
-      document.getElementById("chantierDetails").style.display = "none";
-      afficherListe();
+      fields.forEach(f => {
+        document.getElementById(f).value = p[f] || "";
+      });
     }
 
-    window.addEventListener("DOMContentLoaded", afficherListe);
-  </script>
+    chantierSelect.addEventListener("change", () => {
+      const sel = chantierSelect.value;
+      if (sel) {
+        afficherProfil(sel);
+        form.style.display = "block";
+      } else {
+        form.style.display = "none";
+      }
+    });
 
+    btnSauvegarder.addEventListener("click", () => {
+      const sel = chantierSelect.value;
+      if (!sel) return;
+      const profils = JSON.parse(localStorage.getItem("profilChantiers")) || {};
+      profils[sel] = {};
+      fields.forEach(f => {
+        profils[sel][f] = document.getElementById(f).value.trim();
+      });
+      localStorage.setItem("profilChantiers", JSON.stringify(profils));
+      alert("Profil sauvegardé !");
+    });
+
+    btnSupprimer.addEventListener("click", () => {
+      const sel = chantierSelect.value;
+      if (!sel) return;
+      if (!confirm(`Supprimer profil de "${sel}" ?`)) return;
+      const profils = JSON.parse(localStorage.getItem("profilChantiers")) || {};
+      delete profils[sel];
+      localStorage.setItem("profilChantiers", JSON.stringify(profils));
+      form.reset();
+      form.style.display = "none";
+      alert("Profil supprimé.");
+    });
+
+    // Init
+    chargerListeChantiers();
+  </script>
 </body>
 </html>
