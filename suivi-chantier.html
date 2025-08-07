@@ -72,6 +72,7 @@
       text-align: center;
       font-style: italic;
       color: #888;
+      margin-bottom: 20px;
     }
   </style>
 </head>
@@ -81,6 +82,8 @@
   <select id="chantierSelect">
     <option value="">Sélectionner un chantier</option>
   </select>
+
+  <div id="message" class="message"></div>
 
   <canvas id="graphiqueScores" height="200"></canvas>
 
@@ -94,11 +97,15 @@
     const ctx = document.getElementById("graphiqueScores").getContext("2d");
     const pdfListe = document.getElementById("pdfListe");
     const pdfItemsContainer = document.getElementById("pdfItemsContainer");
+    const message = document.getElementById("message");
     let chart;
 
-    // Charger les chantiers depuis localStorage (même méthode que controle.html / controle-bureau.html)
     function chargerChantiers() {
-      const chantiers = JSON.parse(localStorage.getItem("listeChantiers")) || [];
+      let chantiers = JSON.parse(localStorage.getItem("listeChantiers")) || [];
+
+      // Éviter les doublons ou valeurs vides
+      chantiers = [...new Set(chantiers)].filter(c => c && c.trim() !== "");
+
       chantierSelect.innerHTML = `<option value="">Sélectionner un chantier</option>`;
       chantiers.sort().forEach(chantier => {
         const option = document.createElement("option");
@@ -108,7 +115,6 @@
       });
     }
 
-    // Charger les scores et afficher le graphique
     function chargerScores(chantier) {
       const donnees = JSON.parse(localStorage.getItem("pdfScores_" + chantier)) || [];
 
@@ -118,8 +124,12 @@
       }
 
       if (donnees.length === 0) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        message.innerText = "Aucun score enregistré pour ce chantier.";
         return;
       }
+
+      message.innerText = "";
 
       const labels = donnees.map(item => item.date);
       const scores = donnees.map(item => item.score);
@@ -159,7 +169,6 @@
       });
     }
 
-    // Charger les PDFs du chantier
     function chargerPDFs(chantier) {
       const fichiers = JSON.parse(localStorage.getItem("pdfFiles_" + chantier)) || [];
       pdfItemsContainer.innerHTML = "";
@@ -195,7 +204,6 @@
       pdfListe.style.display = "block";
     }
 
-    // Lors de la sélection d’un chantier
     chantierSelect.addEventListener("change", () => {
       const chantier = chantierSelect.value;
       if (chantier) {
@@ -206,6 +214,7 @@
           chart.destroy();
           chart = null;
         }
+        message.innerText = "";
         pdfListe.style.display = "none";
       }
     });
