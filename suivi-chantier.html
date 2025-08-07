@@ -21,6 +21,39 @@
       max-width: 600px;
       margin: 0 auto 20px auto;
     }
+    #pdfListe {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    #pdfListe h2 {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+    .pdf-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f0f0f0;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 5px;
+    }
+    .pdf-item button {
+      background: red;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+    }
+    .pdf-item a {
+      text-decoration: none;
+      color: #007bff;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
@@ -32,12 +65,19 @@
 
   <canvas id="graphiqueScores" height="200"></canvas>
 
+  <div id="pdfListe" style="display: none;">
+    <h2>PDFs Récents</h2>
+    <div id="pdfItemsContainer"></div>
+  </div>
+
   <script>
     const chantierSelect = document.getElementById("chantierSelect");
     const ctx = document.getElementById("graphiqueScores").getContext("2d");
+    const pdfListe = document.getElementById("pdfListe");
+    const pdfItemsContainer = document.getElementById("pdfItemsContainer");
     let chart;
 
-    // Fonction pour charger les chantiers depuis localStorage
+    // Charger les chantiers dans le menu déroulant
     function chargerChantiers() {
       const chantiers = JSON.parse(localStorage.getItem("listeChantiers")) || [];
       chantierSelect.innerHTML = `<option value="">Sélectionner un chantier</option>`;
@@ -49,7 +89,7 @@
       });
     }
 
-    // Fonction pour charger les scores pour un chantier
+    // Charger les scores pour le graphique
     function chargerScores(chantier) {
       const donnees = JSON.parse(localStorage.getItem("pdfScores_" + chantier)) || [];
       if (donnees.length === 0) {
@@ -96,12 +136,50 @@
       });
     }
 
+    // Charger les PDFs générés pour le chantier sélectionné
+    function chargerPDFs(chantier) {
+      const fichiers = JSON.parse(localStorage.getItem("pdfFiles_" + chantier)) || [];
+      pdfItemsContainer.innerHTML = "";
+      if (fichiers.length === 0) {
+        pdfListe.style.display = "none";
+        return;
+      }
+
+      fichiers.forEach((fichier, index) => {
+        const div = document.createElement("div");
+        div.className = "pdf-item";
+
+        const lien = document.createElement("a");
+        lien.href = fichier.data;
+        lien.download = fichier.nom;
+        lien.textContent = fichier.nom;
+        lien.target = "_blank";
+
+        const btnSupprimer = document.createElement("button");
+        btnSupprimer.textContent = "Supprimer";
+        btnSupprimer.onclick = () => {
+          fichiers.splice(index, 1);
+          localStorage.setItem("pdfFiles_" + chantier, JSON.stringify(fichiers));
+          chargerPDFs(chantier);
+        };
+
+        div.appendChild(lien);
+        div.appendChild(btnSupprimer);
+        pdfItemsContainer.appendChild(div);
+      });
+
+      pdfListe.style.display = "block";
+    }
+
+    // Gestion de la sélection
     chantierSelect.addEventListener("change", () => {
       const chantier = chantierSelect.value;
       if (chantier) {
         chargerScores(chantier);
-      } else if (chart) {
-        chart.destroy();
+        chargerPDFs(chantier);
+      } else {
+        if (chart) chart.destroy();
+        pdfListe.style.display = "none";
       }
     });
 
