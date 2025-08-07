@@ -79,6 +79,13 @@
     <button type="button" id="btnSauvegarder">Sauvegarder</button>
     <button type="button" id="btnSupprimer">Supprimer Profil</button>
   </form>
+<script src="common.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const select = document.getElementById("chantierSelect");
+    remplirMenuDeroulant(select);
+  });
+</script>
 
   <script>
     const chantierSelect = document.getElementById("chantierSelect");
