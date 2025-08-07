@@ -54,15 +54,15 @@
   <h1>Dashboard INOVTEC</h1>
 
   <div class="menu">
-    <a href="controle.html">Contrôle Qualité</a>
-    <a href="controle-bureau.hmtl">Variables</a>
+    <a href="controle.html">Contrôle coproprieté</a>
+    <a href="controle-bureau.hmtl">Contrôle Bureau</a>
     <a href="employes.html">Liste des Employés</a>
     <a href="chantiers.html">Liste des Chantiers</a>
     <a href="suivis-variable.html">Variables</a>
 
     <!-- Export/Import Buttons -->
-    <button onclick="exporterDonnees()">📤 Exporter les données</button>
-    <button onclick="document.getElementById('importFile').click()">📥 Importer les données</button>
+    <button onclick="exporterDonnees()">Exporter les données</button>
+    <button onclick="document.getElementById('importFile').click()">Importer les données</button>
     <input type="file" id="importFile" accept=".json" onchange="importerDonnees(event)">
   </div>
 
