@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Contrôle Qualité - Coproprietes</title>
-  <title>Contrôle copropriétés</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, sans-serif;
@@ -152,7 +151,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
-    // GESTION CHANTIERS
     let chantiers = JSON.parse(localStorage.getItem("chantiersListe") || "[]");
     const chantierSelect = document.getElementById("chantierSelect");
 
@@ -186,7 +184,6 @@
       afficherChantiers();
     }
 
-    // Aller au suivi avec mémorisation du chantier sélectionné
     function allerAuSuivi() {
       const selected = chantierSelect.value;
       if (!selected) {
@@ -202,7 +199,6 @@
       ajouterLigneChecklistInitiales();
     });
 
-    // CHECKLIST
     function ajouterLigneChecklist(nom = null) {
       const input = document.getElementById("newChecklistItem");
       if (!nom) nom = input.value.trim();
@@ -242,7 +238,6 @@
       ].forEach(nom => ajouterLigneChecklist(nom));
     }
 
-    // PHOTOS
     const photoInput = document.getElementById("photos");
     const photoGallery = document.getElementById("photoGallery");
     let photoDataUrls = [];
@@ -274,7 +269,6 @@
       this.value = "";
     });
 
-    // PDF + SCORE
     async function genererPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
@@ -284,15 +278,12 @@
       const date = new Date().toLocaleString('fr-FR');
       let bonCount = 0, passableCount = 0, malCount = 0;
       let y = 15;
+
       const pdfBase64 = doc.output("datauristring");
       const pdfs = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
-      pdfs.push({
-  chantier,
-  date,
-  nom: `rapport-${chantier}-${date}.pdf`,
-  base64: pdfBase64
-});
-localStorage.setItem("pdfsStockes", JSON.stringify(pdfs));
+      pdfs.push({ chantier, date, nom: `rapport-${chantier}-${date}.pdf`, base64: pdfBase64 });
+      localStorage.setItem("pdfsStockes", JSON.stringify(pdfs));
+
       doc.setFontSize(16);
       doc.setTextColor(16, 185, 129);
       doc.text("Rapport de Contrôle Qualité - Nettoyage", 10, y);
@@ -335,6 +326,11 @@ localStorage.setItem("pdfsStockes", JSON.stringify(pdfs));
       const resultats = JSON.parse(localStorage.getItem("resultatsQualite") || "[]");
       resultats.push({ chantier, date, score: scoreGlobal });
       localStorage.setItem("resultatsQualite", JSON.stringify(resultats));
+
+      // ✅ Enregistrement du score par chantier pour le suivi
+      let scores = JSON.parse(localStorage.getItem("pdfScores_" + chantier)) || [];
+      scores.push({ date: date, score: scoreGlobal });
+      localStorage.setItem("pdfScores_" + chantier, JSON.stringify(scores));
 
       doc.addPage();
       doc.setFontSize(16);
