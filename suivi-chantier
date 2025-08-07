@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Suivi Qualité Chantier</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    select, canvas {
+      display: block;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto 20px auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Suivi Qualité Chantier</h1>
+
+  <select id="chantierSelect">
+    <option value="">Sélectionner un chantier</option>
+  </select>
+
+  <canvas id="graphiqueScores" height="200"></canvas>
+
+  <script>
+    const chantierSelect = document.getElementById("chantierSelect");
+    const ctx = document.getElementById("graphiqueScores").getContext("2d");
+    let chart;
+
+    // Fonction pour charger les chantiers depuis localStorage
+    function chargerChantiers() {
+      const chantiers = JSON.parse(localStorage.getItem("listeChantiers")) || [];
+      chantierSelect.innerHTML = `<option value="">Sélectionner un chantier</option>`;
+      chantiers.sort().forEach(chantier => {
+        const option = document.createElement("option");
+        option.value = chantier;
+        option.textContent = chantier;
+        chantierSelect.appendChild(option);
+      });
+    }
+
+    // Fonction pour charger les scores pour un chantier
+    function chargerScores(chantier) {
+      const donnees = JSON.parse(localStorage.getItem("pdfScores_" + chantier)) || [];
+      if (donnees.length === 0) {
+        if (chart) chart.destroy();
+        return;
+      }
+
+      const labels = donnees.map(item => item.date);
+      const scores = donnees.map(item => item.score);
+
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "Score Qualité",
+            data: scores,
+            fill: false,
+            tension: 0.1,
+            borderColor: "#007bff",
+            pointBackgroundColor: "#007bff"
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              min: 0,
+              max: 100,
+              title: {
+                display: true,
+                text: "Score"
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: "Date"
+              }
+            }
+          }
+        }
+      });
+    }
+
+    chantierSelect.addEventListener("change", () => {
+      const chantier = chantierSelect.value;
+      if (chantier) {
+        chargerScores(chantier);
+      } else if (chart) {
+        chart.destroy();
+      }
+    });
+
+    chargerChantiers();
+  </script>
+</body>
+</html>
