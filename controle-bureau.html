@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Contrôle Qualité - Bureau</title>
-  <title>Contrôle bureaux</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, sans-serif;
@@ -103,9 +102,6 @@
       justify-content: center;
       margin-top: 15px;
     }
-    #chartCanvas {
-      display: none;
-    }
   </style>
 </head>
 <body>
@@ -114,7 +110,6 @@
   <div class="card">
     <label for="chantierSelect">Chantier :</label>
     <select id="chantierSelect"></select>
-
     <input type="text" id="nouveauChantier" placeholder="Nouveau chantier..." />
     <div class="btn-row">
       <button type="button" onclick="ajouterChantier()">➕ Ajouter</button>
@@ -146,10 +141,7 @@
     </form>
   </div>
 
-  <canvas id="chartCanvas" width="400" height="400"></canvas>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
     // GESTION CHANTIERS
@@ -184,17 +176,6 @@
       chantiers = chantiers.filter(n => n !== selected);
       localStorage.setItem("chantiersListe", JSON.stringify(chantiers));
       afficherChantiers();
-    }
-
-    // Aller au suivi avec mémorisation du chantier sélectionné
-    function allerAuSuivi() {
-      const selected = chantierSelect.value;
-      if (!selected) {
-        alert("Veuillez sélectionner un chantier.");
-        return;
-      }
-      localStorage.setItem("chantierSelectionne", selected);
-      window.location.href = "suivi.html";
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -233,11 +214,11 @@
     function ajouterLigneChecklistInitiales() {
       [
         "Vidage des poubelles", "Mise en poche poubelle", "Enlevement toile d'araignées",
-        "dépoussièrage plinthe", "Nettoyahe interrupteur", "Nettoyage banque accueil", "Dépoussièrage ordinteur et accessoires",
-        "Aspiration sols", "Lavage sols", "Nettoyage façade portes",
-        "Nettoyages plan de travail et lavabos", "Dépoussièrage distributeurs", "",
-        "robineterie", "Nettoyage wc", "Miroiterie",
-        "Point de contacts", "Vitreries", "Conteneurs",
+        "Dépoussièrage plinthe", "Nettoyage interrupteur", "Nettoyage banque accueil",
+        "Dépoussièrage ordinateur et accessoires", "Aspiration sols", "Lavage sols",
+        "Nettoyage façade portes", "Nettoyages plan de travail et lavabos",
+        "Dépoussièrage distributeurs", "Robinetterie", "Nettoyage WC", "Miroiterie",
+        "Point de contacts", "Vitreries", "Conteneurs"
       ].forEach(nom => ajouterLigneChecklist(nom));
     }
 
@@ -283,15 +264,7 @@
       const date = new Date().toLocaleString('fr-FR');
       let bonCount = 0, passableCount = 0, malCount = 0;
       let y = 15;
-      const pdfBase64 = doc.output("datauristring");
-      const pdfs = JSON.parse(localStorage.getItem("pdfsStockes") || "[]");
-      pdfs.push({
-  chantier,
-  date,
-  nom: `rapport-${chantier}-${date}.pdf`,
-  base64: pdfBase64
-});
-localStorage.setItem("pdfsStockes", JSON.stringify(pdfs));
+
       doc.setFontSize(16);
       doc.setTextColor(16, 185, 129);
       doc.text("Rapport de Contrôle Qualité - Nettoyage", 10, y);
@@ -303,7 +276,7 @@ localStorage.setItem("pdfsStockes", JSON.stringify(pdfs));
       doc.text(`Date : ${date}`, 10, y);
       y += 12;
 
-      items.forEach((item) => {
+      items.forEach(item => {
         const nom = item.querySelector("span").textContent;
         const radios = item.querySelectorAll("input[type='radio']");
         let result = "non évalué";
@@ -313,9 +286,11 @@ localStorage.setItem("pdfsStockes", JSON.stringify(pdfs));
         else if (result === "Passable") passableCount++;
         else if (result === "Mal fait") malCount++;
 
-        doc.setTextColor(result === "Bon" ? 34 : result === "Passable" ? 234 : result === "Mal fait" ? 239 : 0,
-                         result === "Bon" ? 197 : result === "Passable" ? 179 : result === "Mal fait" ? 68 : 0,
-                         result === "Bon" ? 94  : result === "Passable" ? 8   : result === "Mal fait" ? 68 : 0);
+        doc.setTextColor(
+          result === "Bon" ? 34 : result === "Passable" ? 234 : result === "Mal fait" ? 239 : 0,
+          result === "Bon" ? 197 : result === "Passable" ? 179 : result === "Mal fait" ? 68 : 0,
+          result === "Bon" ? 94  : result === "Passable" ? 8   : result === "Mal fait" ? 68 : 0
+        );
 
         doc.text(`- ${nom} : ${result}`, 10, y);
         y += 8;
@@ -334,6 +309,11 @@ localStorage.setItem("pdfsStockes", JSON.stringify(pdfs));
       const resultats = JSON.parse(localStorage.getItem("resultatsQualite") || "[]");
       resultats.push({ chantier, date, score: scoreGlobal });
       localStorage.setItem("resultatsQualite", JSON.stringify(resultats));
+
+      // ➕ Sauvegarde individuelle pour le graphique
+      let scores = JSON.parse(localStorage.getItem("pdfScores_" + chantier)) || [];
+      scores.push({ date, score: scoreGlobal });
+      localStorage.setItem("pdfScores_" + chantier, JSON.stringify(scores));
 
       doc.addPage();
       doc.setFontSize(16);
